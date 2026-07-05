@@ -401,6 +401,9 @@
         }
       }
     },
+    "# %@" : {
+
+    },
     "%.0f seconds" : {
       "localizations" : {
         "ar" : {
@@ -900,6 +903,12 @@
           }
         }
       }
+    },
+    "%lld changes" : {
+
+    },
+    "%lld repos found" : {
+
     },
     "%lld%%" : {
       "localizations" : {
@@ -1700,6 +1709,9 @@
           }
         }
       }
+    },
+    "Active repo" : {
+
     },
     "Add" : {
       "localizations" : {
@@ -3902,6 +3914,9 @@
         }
       }
     },
+    "Branch" : {
+
+    },
     "Calendar" : {
       "localizations" : {
         "ar" : {
@@ -4401,6 +4416,9 @@
           }
         }
       }
+    },
+    "Changes" : {
+
     },
     "Charging" : {
       "localizations" : {
@@ -5201,6 +5219,9 @@
           }
         }
       }
+    },
+    "clean" : {
+
     },
     "Clear slot" : {
       "localizations" : {
@@ -6202,6 +6223,9 @@
         }
       }
     },
+    "Current status" : {
+
+    },
     "Currently selected: %@" : {
       "localizations" : {
         "ar" : {
@@ -7202,6 +7226,15 @@
           }
         }
       }
+    },
+    "Dev" : {
+
+    },
+    "DEV" : {
+
+    },
+    "Dev Mode watches this folder with macOS file events and debounces changes. It ignores heavy folders like node_modules, vendor, .git, build, dist and DerivedData." : {
+
     },
     "Disable" : {
       "extractionState" : "stale",
@@ -8406,6 +8439,9 @@
           }
         }
       }
+    },
+    "Enable Dev Mode" : {
+
     },
     "Enable gestures" : {
       "localizations" : {
@@ -16110,6 +16146,9 @@
         }
       }
     },
+    "Path" : {
+
+    },
     "Pick a Color" : {
       "localizations" : {
         "ar" : {
@@ -16510,6 +16549,9 @@
         }
       }
     },
+    "Projects root" : {
+
+    },
     "Quick Share" : {
       "localizations" : {
         "ar" : {
@@ -16909,6 +16951,12 @@
           }
         }
       }
+    },
+    "Refresh Dev Status" : {
+
+    },
+    "Refresh now" : {
+
     },
     "Release name" : {
       "localizations" : {
@@ -17610,6 +17658,9 @@
         }
       }
     },
+    "Repository detection" : {
+
+    },
     "Request Accessibility" : {
       "localizations" : {
         "ar" : {
@@ -18111,6 +18162,12 @@
           }
         }
       }
+    },
+    "SCAN" : {
+
+    },
+    "Scanning…" : {
+
     },
     "Select the music source you want to use. You can change this later in the app settings." : {
       "localizations" : {
@@ -19112,6 +19169,12 @@
         }
       }
     },
+    "Show Dev status when notch is closed" : {
+
+    },
+    "Show Dev summary on Home screen" : {
+
+    },
     "Show HUD in open notch" : {
       "localizations" : {
         "ar" : {
@@ -20111,6 +20174,9 @@
           }
         }
       }
+    },
+    "Show smart clipboard previews" : {
+
     },
     "Show sneak peek on playback changes" : {
       "localizations" : {

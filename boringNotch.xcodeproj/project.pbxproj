@@ -143,6 +143,10 @@
 		B1F747F92EC7E94000F841DB /* LottieView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B1F747F82EC7E94000F841DB /* LottieView.swift */; };
 		B1FEB4992C7686630066EBBC /* PanGesture.swift in Sources */ = {isa = PBXBuildFile; fileRef = B1FEB4982C7686630066EBBC /* PanGesture.swift */; };
 		F38DE6482D8243E7008B5C6D /* BatteryActivityManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = F38DE6472D8243E2008B5C6D /* BatteryActivityManager.swift */; };
+		A8F43371B54035333CC4A4DA /* DevStatusCore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 83BFFD2CC2E6DC6C68A523F0 /* DevStatusCore.swift */; };
+		75D83FD202970010A487BD1E /* DevStatusView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AFFC7564E6EDF55698B66BFB /* DevStatusView.swift */; };
+		8C77F94E0502AE971638E6EC /* DevStatusManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 38A014657A65C4BA22189CAD /* DevStatusManager.swift */; };
+		DAB205A9337CC48511FEBBCF /* ClipboardPreviewManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 85026371F84F8D59717E9AE0 /* ClipboardPreviewManager.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -309,6 +313,10 @@
 		B1F747F82EC7E94000F841DB /* LottieView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LottieView.swift; sourceTree = "<group>"; };
 		B1FEB4982C7686630066EBBC /* PanGesture.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PanGesture.swift; sourceTree = "<group>"; };
 		F38DE6472D8243E2008B5C6D /* BatteryActivityManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BatteryActivityManager.swift; sourceTree = "<group>"; };
+		83BFFD2CC2E6DC6C68A523F0 /* DevStatusCore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DevStatusCore.swift; sourceTree = "<group>"; };
+		AFFC7564E6EDF55698B66BFB /* DevStatusView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DevStatusView.swift; sourceTree = "<group>"; };
+		38A014657A65C4BA22189CAD /* DevStatusManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DevStatusManager.swift; sourceTree = "<group>"; };
+		85026371F84F8D59717E9AE0 /* ClipboardPreviewManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClipboardPreviewManager.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
@@ -403,6 +411,15 @@
 			path = Views;
 			sourceTree = "<group>";
 		};
+		C409BB038881D047FACDA098 /* Dev */ = {
+			isa = PBXGroup;
+			children = (
+				83BFFD2CC2E6DC6C68A523F0 /* DevStatusCore.swift */,
+				AFFC7564E6EDF55698B66BFB /* DevStatusView.swift */,
+			);
+			path = Dev;
+			sourceTree = "<group>";
+		};
 		112B0EB62E30DD0F00562D6C /* mediaremote-adapter */ = {
 			isa = PBXGroup;
 			children = (
@@ -486,6 +503,7 @@
 		1471639B2C5D362F0068B555 /* components */ = {
 			isa = PBXGroup;
 			children = (
+				C409BB038881D047FACDA098 /* Dev */,
 				B141C23B2CA5F50900AC8CC8 /* Onboarding */,
 				B1C448992C97375A001F0858 /* Tips */,
 				14C08BB72C8DE49E000F8AA0 /* Calendar */,
@@ -510,6 +528,8 @@
 		147163B52C5D804B0068B555 /* managers */ = {
 			isa = PBXGroup;
 			children = (
+				85026371F84F8D59717E9AE0 /* ClipboardPreviewManager.swift */,
+				38A014657A65C4BA22189CAD /* DevStatusManager.swift */,
 				11D58EA12E760AE100FA8377 /* ImageService.swift */,
 				F38DE6472D8243E2008B5C6D /* BatteryActivityManager.swift */,
 				112FB7342CCF16F70015238C /* NotchSpaceManager.swift */,
@@ -905,6 +925,10 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				A8F43371B54035333CC4A4DA /* DevStatusCore.swift in Sources */,
+				75D83FD202970010A487BD1E /* DevStatusView.swift in Sources */,
+				DAB205A9337CC48511FEBBCF /* ClipboardPreviewManager.swift in Sources */,
+				8C77F94E0502AE971638E6EC /* DevStatusManager.swift in Sources */,
 				115C12EC2ED3D003009754CA /* OpenNotchHUD.swift in Sources */,
 				14C08BB92C8DE4B1000F8AA0 /* BoringCalendar.swift in Sources */,
 				5955950D2E900ED800C66711 /* ApplicationRelauncher.swift in Sources */,

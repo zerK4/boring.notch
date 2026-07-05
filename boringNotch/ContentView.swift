@@ -20,6 +20,8 @@ struct ContentView: View {
 
     @ObservedObject var coordinator = BoringViewCoordinator.shared
     @ObservedObject var musicManager = MusicManager.shared
+    @ObservedObject var devStatusManager = DevStatusManager.shared
+    @ObservedObject var clipboardPreviewManager = ClipboardPreviewManager.shared
     @ObservedObject var batteryModel = BatteryStatusViewModel.shared
     @ObservedObject var brightnessManager = BrightnessManager.shared
     @ObservedObject var volumeManager = VolumeManager.shared
@@ -36,7 +38,8 @@ struct ContentView: View {
     @Default(.useMusicVisualizer) var useMusicVisualizer
 
     @Default(.showNotHumanFace) var showNotHumanFace
-
+    @Default(.clipboardPreviewEnabled) var clipboardPreviewEnabled
+    // Shared interactive spring
     // Shared interactive spring for movement/resizing to avoid conflicting animations
     private let animationSpring = Animation.interactiveSpring(response: 0.38, dampingFraction: 0.8, blendDuration: 0)
 
@@ -70,6 +73,13 @@ struct ContentView: View {
             && coordinator.musicLiveActivityEnabled && !vm.hideOnClosed
         {
             chinWidth += (2 * max(0, vm.effectiveClosedNotchHeight - 12) + 20)
+        } else if Defaults[.devClosedStatusEnabled]
+            && devStatusManager.activeStatus != nil
+            && !coordinator.expandingView.show
+            && vm.notchState == .closed
+            && !vm.hideOnClosed
+        {
+            chinWidth = max(chinWidth, min(280, vm.closedNotchSize.width + 95))
         } else if !coordinator.expandingView.show && vm.notchState == .closed
             && (!musicManager.isPlaying && musicManager.isPlayerIdle) && Defaults[.showNotHumanFace]
             && !vm.hideOnClosed
@@ -201,6 +211,16 @@ struct ContentView: View {
                         .frame(width: computedChinWidth, height: vm.chinHeight)
                 }
             }
+
+            if Defaults[.clipboardPreviewEnabled],
+               clipboardPreviewManager.currentPreview != nil,
+               vm.notchState == .closed,
+               !vm.hideOnClosed {
+                ClipboardPreviewTooltip()
+                    .offset(y: max(32, vm.effectiveClosedNotchHeight + 10))
+                    .transition(.move(edge: .top).combined(with: .opacity))
+                    .zIndex(10)
+            }
         }
         .padding(.bottom, 8)
         .frame(maxWidth: windowSize.width, maxHeight: windowSize.height, alignment: .top)
@@ -214,6 +234,9 @@ struct ContentView: View {
         .background(dragDetector)
         .preferredColorScheme(.dark)
         .environmentObject(vm)
+        .onChange(of: clipboardPreviewEnabled) { _, enabled in
+            enabled ? clipboardPreviewManager.start() : clipboardPreviewManager.stop()
+        }
         .onChange(of: vm.anyDropZoneTargeting) { _, isTargeted in
             anyDropDebounceTask?.cancel()
 
@@ -290,6 +313,13 @@ struct ContentView: View {
                       } else if (!coordinator.expandingView.show || coordinator.expandingView.type == .music) && vm.notchState == .closed && (musicManager.isPlaying || !musicManager.isPlayerIdle) && coordinator.musicLiveActivityEnabled && !vm.hideOnClosed {
                           MusicLiveActivity()
                               .frame(alignment: .center)
+                      } else if Defaults[.devClosedStatusEnabled]
+                          && devStatusManager.activeStatus != nil
+                          && !coordinator.expandingView.show
+                          && vm.notchState == .closed
+                          && !vm.hideOnClosed {
+                          DevClosedLiveActivity()
+                              .frame(alignment: .center)
                       } else if !coordinator.expandingView.show && vm.notchState == .closed && (!musicManager.isPlaying && musicManager.isPlayerIdle) && Defaults[.showNotHumanFace] && !vm.hideOnClosed  {
                           BoringFaceAnimation()
                        } else if vm.notchState == .open {
@@ -349,6 +379,8 @@ struct ContentView: View {
                         NotchHomeView(albumArtNamespace: albumArtNamespace)
                     case .shelf:
                         ShelfView()
+                    case .dev:
+                        DevStatusView()
                     }
                 }
                 .transition(
@@ -362,6 +394,77 @@ struct ContentView: View {
             }
         }
         .onDrop(of: [.fileURL, .url, .utf8PlainText, .plainText, .data], delegate: GeneralDropTargetDelegate(isTargeted: $vm.generalDropTargeting))
+    }
+
+    @ViewBuilder
+    func ClipboardPreviewTooltip() -> some View {
+        if let preview = clipboardPreviewManager.currentPreview {
+            HStack(spacing: 10) {
+                Image(systemName: preview.icon)
+                    .font(.system(size: 14, weight: .semibold))
+                    .foregroundColor(.effectiveAccent)
+                    .frame(width: 18)
+
+                VStack(alignment: .leading, spacing: 1) {
+                    Text(preview.title)
+                        .font(.system(.caption, design: .rounded))
+                        .fontWeight(.semibold)
+                        .foregroundStyle(.white)
+                        .lineLimit(1)
+
+                    Text(preview.subtitle)
+                        .font(.system(.caption2, design: .rounded))
+                        .foregroundStyle(.gray)
+                        .lineLimit(1)
+                        .truncationMode(.middle)
+                }
+            }
+            .padding(.horizontal, 13)
+            .padding(.vertical, 8)
+            .frame(maxWidth: 280, alignment: .leading)
+            .background(.black.opacity(0.92), in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+            .overlay(
+                RoundedRectangle(cornerRadius: 16, style: .continuous)
+                    .stroke(Color.white.opacity(0.12), lineWidth: 1)
+            )
+            .shadow(color: .black.opacity(0.45), radius: 12, x: 0, y: 8)
+        }
+    }
+
+    @ViewBuilder
+    func DevClosedLiveActivity() -> some View {
+        if let status = devStatusManager.activeStatus {
+            HStack(spacing: 8) {
+                Image(systemName: status.hasChanges ? "circle.fill" : "checkmark.circle.fill")
+                    .font(.system(size: 8, weight: .bold))
+                    .foregroundStyle(status.hasChanges ? .orange : .green)
+
+                Text(status.displayName)
+                    .font(.system(.caption, design: .rounded))
+                    .fontWeight(.semibold)
+                    .foregroundStyle(.white)
+                    .lineLimit(1)
+                    .truncationMode(.tail)
+
+                Text(status.branch)
+                    .font(.system(.caption2, design: .monospaced))
+                    .foregroundStyle(.gray)
+                    .lineLimit(1)
+
+                Text(status.hasChanges ? "\(status.dirtyCount) changes" : "clean")
+                    .font(.system(.caption2, design: .monospaced))
+                    .fontWeight(status.hasChanges ? .semibold : .regular)
+                    .foregroundStyle(status.hasChanges ? .orange : .green)
+                    .lineLimit(1)
+
+                Text("# \(status.lastCommitShortHash)")
+                    .font(.system(.caption2, design: .monospaced))
+                    .foregroundStyle(.gray)
+                    .lineLimit(1)
+            }
+            .padding(.horizontal, 14)
+            .frame(width: computedChinWidth, height: vm.effectiveClosedNotchHeight, alignment: .center)
+        }
     }
 
     @ViewBuilder

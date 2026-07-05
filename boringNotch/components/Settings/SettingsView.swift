@@ -51,6 +51,9 @@ struct SettingsView: View {
                 NavigationLink(value: "Shelf") {
                     Label("Shelf", systemImage: "books.vertical")
                 }
+                NavigationLink(value: "Dev") {
+                    Label("Dev", systemImage: "hammer")
+                }
                 NavigationLink(value: "Shortcuts") {
                     Label("Shortcuts", systemImage: "keyboard")
                 }
@@ -85,6 +88,8 @@ struct SettingsView: View {
                     Charge()
                 case "Shelf":
                     Shelf()
+                case "Dev":
+                    DevSettings()
                 case "Shortcuts":
                     Shortcuts()
                 case "Extensions":
@@ -188,6 +193,9 @@ struct GeneralSettings: View {
                             name: Notification.Name.automaticallySwitchDisplayChanged, object: nil)
                     }
                     .disabled(showOnAllDisplays)
+                Defaults.Toggle(key: .clipboardPreviewEnabled) {
+                    Text("Show smart clipboard previews")
+                }
             } header: {
                 Text("System features")
             }
@@ -1015,6 +1023,62 @@ struct Shelf: View {
         }
         .accentColor(.effectiveAccent)
         .navigationTitle("Shelf")
+    }
+}
+
+struct DevSettings: View {
+    @Default(.devModeEnabled) var devModeEnabled
+    @Default(.devProjectsRoot) var devProjectsRoot
+    @ObservedObject private var manager = DevStatusManager.shared
+
+    var body: some View {
+        Form {
+            Section {
+                Defaults.Toggle(key: .devModeEnabled) {
+                    Text("Enable Dev Mode")
+                }
+                Defaults.Toggle(key: .devClosedStatusEnabled) {
+                    Text("Show Dev status when notch is closed")
+                }
+                Defaults.Toggle(key: .devHomeSummaryEnabled) {
+                    Text("Show Dev summary on Home screen")
+                }
+                TextField("Projects root", text: $devProjectsRoot)
+                    .textFieldStyle(.roundedBorder)
+                HStack {
+                    Button("Refresh now") {
+                        manager.refreshNow()
+                    }
+                    Spacer()
+                    Text(manager.isRefreshing ? "Scanning…" : "\(manager.repositories.count) repos found")
+                        .foregroundStyle(.secondary)
+                        .font(.caption)
+                }
+            } header: {
+                Text("Repository detection")
+            } footer: {
+                Text("Dev Mode watches this folder with macOS file events and debounces changes. It ignores heavy folders like node_modules, vendor, .git, build, dist and DerivedData.")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+
+            Section {
+                if let status = manager.activeStatus {
+                    LabeledContent("Active repo", value: status.displayName)
+                    LabeledContent("Branch", value: status.branch)
+                    LabeledContent("Changes", value: "\(status.dirtyCount)")
+                    LabeledContent("Path", value: status.candidate.path.path)
+                } else {
+                    Text(manager.lastError ?? "No active repository detected yet.")
+                        .foregroundStyle(.secondary)
+                }
+            } header: {
+                Text("Current status")
+            }
+        }
+        .accentColor(.effectiveAccent)
+        .navigationTitle("Dev")
+        .onAppear { manager.refreshNow() }
     }
 }
 

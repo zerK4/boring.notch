@@ -171,6 +171,16 @@ extension Defaults.Keys {
     static let autoRemoveShelfItems = Key<Bool>("autoRemoveShelfItems", default: false)
     static let expandedDragDetection = Key<Bool>("expandedDragDetection", default: true)
     
+    // MARK: Dev Mode
+    static let devModeEnabled = Key<Bool>("devModeEnabled", default: true)
+    static let devProjectsRoot = Key<String>(
+        "devProjectsRoot",
+        default: "~/Desktop/projects"
+    )
+    static let devClosedStatusEnabled = Key<Bool>("devClosedStatusEnabled", default: true)
+    static let devHomeSummaryEnabled = Key<Bool>("devHomeSummaryEnabled", default: true)
+    static let clipboardPreviewEnabled = Key<Bool>("clipboardPreviewEnabled", default: true)
+
     // MARK: Calendar
     static let calendarSelectionState = Key<CalendarSelectionState>("calendarSelectionState", default: .all)
     static let hideAllDayEvents = Key<Bool>("hideAllDayEvents", default: false)
