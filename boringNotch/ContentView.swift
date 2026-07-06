@@ -76,7 +76,7 @@ struct ContentView: View {
         {
             chinWidth = 640
         } else if shouldShowMeetingClosedAlert {
-            chinWidth = hasPhysicalNotch ? max(chinWidth, min(430, vm.closedNotchSize.width + 220)) : max(chinWidth, 320)
+            chinWidth = hasPhysicalNotch ? max(chinWidth, min(430, vm.closedNotchSize.width + 220)) : max(chinWidth, estimatedMeetingClosedWidth)
         } else if shouldShowDownloadClosedAlert {
             chinWidth = hasPhysicalNotch ? max(chinWidth, min(400, vm.closedNotchSize.width + 190)) : max(chinWidth, estimatedDownloadClosedWidth)
         } else if shouldShowSystemPulseClosedAlert {
@@ -447,6 +447,18 @@ struct ContentView: View {
         musicManager.isPlaying || !musicManager.isPlayerIdle
     }
 
+    private var estimatedMeetingClosedWidth: CGFloat {
+        let snapshot = meetingCompanionManager.snapshot
+        guard snapshot.isActive else { return vm.closedNotchSize.width }
+
+        let iconAndSpacing: CGFloat = 30
+        let horizontalPadding: CGFloat = 28
+        let statusWidth = CGFloat(snapshot.statusText.count) * 8.0
+        let titleWidth = min(CGFloat(snapshot.compactTitle.count) * 7.2, 300)
+        let width = iconAndSpacing + horizontalPadding + statusWidth + titleWidth
+        return min(max(width, 190), windowSize.width - 24)
+    }
+
     private var estimatedDownloadClosedWidth: CGFloat {
         let snapshot = downloadWatcherManager.snapshot
         guard snapshot.isVisible else { return vm.closedNotchSize.width }
@@ -533,7 +545,7 @@ struct ContentView: View {
             meetingCompanionManager.joinMeeting()
         } label: {
             if hasPhysicalNotch {
-                HStack(spacing: 8) {
+                HStack(spacing: 0) {
                     HStack(spacing: 5) {
                         Image(systemName: snapshot.joinURL == nil ? "calendar" : "video.fill")
                             .font(.system(size: 9, weight: .bold))
@@ -543,11 +555,8 @@ struct ContentView: View {
                             .lineLimit(1)
                     }
                     .foregroundStyle(Color.effectiveAccent)
-                    .frame(width: 96, alignment: .trailing)
 
-                    Rectangle()
-                        .fill(.black)
-                        .frame(width: max(80, vm.closedNotchSize.width - 18))
+                    Spacer(minLength: max(82, vm.closedNotchSize.width - 18))
 
                     Text(snapshot.compactTitle)
                         .font(.system(.caption2, design: .rounded))
@@ -555,9 +564,10 @@ struct ContentView: View {
                         .foregroundStyle(.white.opacity(0.92))
                         .lineLimit(1)
                         .truncationMode(.tail)
-                        .frame(width: 116, alignment: .leading)
+                        .frame(maxWidth: 150, alignment: .trailing)
                 }
-                .padding(.horizontal, 10)
+                .frame(maxWidth: .infinity)
+                .padding(.horizontal, 14)
             } else {
                 HStack(spacing: 8) {
                     Image(systemName: snapshot.joinURL == nil ? "calendar" : "video.fill")
