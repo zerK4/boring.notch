@@ -42,23 +42,49 @@ enum ClipboardPreviewClassifier {
     private static func classifyURL(_ text: String) -> ClipboardPreview? {
         guard let url = URL(string: text), let scheme = url.scheme?.lowercased(), ["http", "https"].contains(scheme) else { return nil }
         let host = url.host(percentEncoded: false) ?? "URL"
-        let title = host.contains("github.com") ? "GitHub URL copied" : "URL copied"
-        return ClipboardPreview(kind: .url, title: title, subtitle: host, icon: "link", copiedText: text, createdAt: Date())
+
+        if host == "github.com" || host.hasSuffix(".github.com") {
+            let parts = url.pathComponents.filter { $0 != "/" }
+            if parts.count >= 4, parts[2] == "pull" {
+                return ClipboardPreview(kind: .url, title: "GitHub PR copied", subtitle: "\(parts[0])/\(parts[1]) #\(parts[3])", icon: "arrow.triangle.pull", copiedText: text, createdAt: Date())
+            }
+            if parts.count >= 2 {
+                return ClipboardPreview(kind: .url, title: "GitHub repo copied", subtitle: "\(parts[0])/\(parts[1])", icon: "chevron.left.forwardslash.chevron.right", copiedText: text, createdAt: Date())
+            }
+            return ClipboardPreview(kind: .url, title: "GitHub URL copied", subtitle: host, icon: "link", copiedText: text, createdAt: Date())
+        }
+
+        return ClipboardPreview(kind: .url, title: "URL copied", subtitle: host, icon: "link", copiedText: text, createdAt: Date())
     }
 
     private static func classifyFilePath(_ text: String) -> ClipboardPreview? {
-        guard text.hasPrefix("/") || text.hasPrefix("~/") else { return nil }
+        guard !text.contains("\n"), text.count <= 1_024 else { return nil }
         let expanded = (text as NSString).expandingTildeInPath
+        let looksLikeUserPath = text.hasPrefix("~/") || text.hasPrefix("/Users/") || text.hasPrefix("/Volumes/") || text.hasPrefix("/Applications/")
+        let exists = FileManager.default.fileExists(atPath: expanded)
+        guard looksLikeUserPath || exists else { return nil }
+
         let url = URL(fileURLWithPath: expanded)
         let last = url.lastPathComponent.isEmpty ? expanded : url.lastPathComponent
-        return ClipboardPreview(kind: .filePath, title: "File path copied", subtitle: last, icon: "doc.on.clipboard", copiedText: text, createdAt: Date())
+        let parent = url.deletingLastPathComponent().lastPathComponent
+        let subtitle = parent.isEmpty ? last : "\(parent)/\(last)"
+        return ClipboardPreview(kind: .filePath, title: exists ? "File path copied" : "Path copied", subtitle: subtitle, icon: exists ? "doc.on.clipboard" : "folder.badge.questionmark", copiedText: text, createdAt: Date())
     }
 
     private static func classifyJSON(_ text: String) -> ClipboardPreview? {
         guard let first = text.first, ["{", "["].contains(first) else { return nil }
         guard let data = text.data(using: .utf8),
-              (try? JSONSerialization.jsonObject(with: data)) != nil else { return nil }
-        return ClipboardPreview(kind: .json, title: "JSON copied", subtitle: "Valid JSON", icon: "curlybraces", copiedText: text, createdAt: Date())
+              let object = try? JSONSerialization.jsonObject(with: data) else { return nil }
+
+        let subtitle: String
+        if let dictionary = object as? [String: Any] {
+            subtitle = "Valid JSON · \(dictionary.count) keys"
+        } else if let array = object as? [Any] {
+            subtitle = "Valid JSON · \(array.count) items"
+        } else {
+            subtitle = "Valid JSON"
+        }
+        return ClipboardPreview(kind: .json, title: "JSON copied", subtitle: subtitle, icon: "curlybraces", copiedText: text, createdAt: Date())
     }
 
     private static func classifyBranch(_ text: String) -> ClipboardPreview? {
@@ -105,6 +131,14 @@ final class ClipboardPreviewManager: ObservableObject {
         clearTask?.cancel()
         clearTask = nil
         currentPreview = nil
+    }
+
+    func dismissPreview() {
+        clearTask?.cancel()
+        clearTask = nil
+        withAnimation(.smooth(duration: 0.15)) {
+            currentPreview = nil
+        }
     }
 
     private func checkPasteboard() {

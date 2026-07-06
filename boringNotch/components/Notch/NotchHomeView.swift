@@ -423,6 +423,9 @@ struct NotchHomeView: View {
     @ObservedObject var webcamManager = WebcamManager.shared
     @ObservedObject var batteryModel = BatteryStatusViewModel.shared
     @ObservedObject var coordinator = BoringViewCoordinator.shared
+    @ObservedObject private var musicManager = MusicManager.shared
+    @ObservedObject private var devStatusManager = DevStatusManager.shared
+    @ObservedObject private var systemPulseManager = SystemPulseManager.shared
     let albumArtNamespace: Namespace.ID
 
     var body: some View {
@@ -443,11 +446,19 @@ struct NotchHomeView: View {
         HStack(alignment: .top, spacing: (shouldShowCamera && Defaults[.showCalendar]) ? 10 : 15) {
             MusicPlayerView(albumArtNamespace: albumArtNamespace)
 
-            if Defaults[.showCalendar] {
+            if Defaults[.showCalendar] || Defaults[.showNotchPet] || Defaults[.devHomeSummaryEnabled] {
                 VStack(spacing: 7) {
-                    CalendarView()
+                    if Defaults[.showCalendar] {
+                        CalendarView()
+                    }
+
                     if Defaults[.devHomeSummaryEnabled] {
                         DevHomeSummaryView()
+                            .transition(.opacity.combined(with: .move(edge: .bottom)))
+                    }
+
+                    if Defaults[.showNotchPet] {
+                        notchPet
                             .transition(.opacity.combined(with: .move(edge: .bottom)))
                     }
                 }
@@ -467,8 +478,234 @@ struct NotchHomeView: View {
                     .animation(.interactiveSpring(response: 0.32, dampingFraction: 0.76, blendDuration: 0), value: shouldShowCamera)
             }
         }
+        .frame(maxWidth: max(0, vm.notchSize.width - 48), alignment: .center)
+        .clipped()
+        .contentShape(Rectangle())
         .transition(.asymmetric(insertion: .opacity.combined(with: .move(edge: .top)), removal: .opacity))
         .blur(radius: vm.notchState == .closed ? 30 : 0)
+        .onAppear {
+            systemPulseManager.start()
+        }
+    }
+
+    private var notchPetState: NotchPetState {
+        if let severity = Optional(systemPulseManager.snapshot.severity), severity >= .high {
+            return .hot
+        }
+        if musicManager.isPlaying {
+            return .music
+        }
+        if devStatusManager.activeStatus?.hasChanges == true {
+            return .working
+        }
+        if batteryModel.isCharging || batteryModel.isPluggedIn {
+            return .charging
+        }
+        return .idle
+    }
+
+    private var notchPet: some View {
+        NotchPetView(
+            state: notchPetState,
+            fanRPM: systemPulseManager.snapshot.fanRPM,
+            temperature: systemPulseManager.snapshot.temperatureCelsius
+        )
+    }
+}
+
+private enum NotchPetState {
+    case idle
+    case music
+    case hot
+    case working
+    case charging
+
+    var label: String {
+        switch self {
+        case .idle: return "chillin'"
+        case .music: return "vibing"
+        case .hot: return "toasty"
+        case .working: return "building"
+        case .charging: return "charging"
+        }
+    }
+
+    var symbol: String {
+        switch self {
+        case .idle: return "zzz"
+        case .music: return "music.note"
+        case .hot: return "drop.fill"
+        case .working: return "hammer.fill"
+        case .charging: return "bolt.fill"
+        }
+    }
+
+    var color: Color {
+        switch self {
+        case .idle: return .effectiveAccent
+        case .music: return .purple
+        case .hot: return .orange
+        case .working: return .yellow
+        case .charging: return .green
+        }
+    }
+}
+
+private struct NotchPetView: View {
+    let state: NotchPetState
+    let fanRPM: Int?
+    let temperature: Double?
+
+    @State private var blink = false
+    @State private var wiggle = false
+
+    var body: some View {
+        HStack(spacing: 8) {
+            petBody
+                .frame(width: 42, height: 34)
+                .rotationEffect(.degrees(wiggle ? 3 : -3))
+                .offset(y: wiggle ? -1 : 1)
+                .animation(.easeInOut(duration: state == .music ? 0.28 : 1.2).repeatForever(autoreverses: true), value: wiggle)
+
+            VStack(alignment: .leading, spacing: 2) {
+                HStack(spacing: 5) {
+                    Text("Notch pet")
+                        .font(.system(.caption, design: .rounded))
+                        .fontWeight(.semibold)
+                        .foregroundStyle(.white)
+                        .lineLimit(1)
+                    Image(systemName: state.symbol)
+                        .font(.system(size: 9, weight: .bold))
+                        .foregroundStyle(state.color)
+                }
+
+                Text(subtitle)
+                    .font(.system(.caption2, design: .rounded))
+                    .foregroundStyle(.gray)
+                    .lineLimit(1)
+            }
+
+            Spacer(minLength: 0)
+        }
+        .padding(.horizontal, 10)
+        .padding(.vertical, 7)
+        .background(Color.white.opacity(0.06), in: RoundedRectangle(cornerRadius: 12, style: .continuous))
+        .overlay(
+            RoundedRectangle(cornerRadius: 12, style: .continuous)
+                .stroke(Color.white.opacity(0.08), lineWidth: 1)
+        )
+        .onAppear {
+            wiggle = true
+            scheduleBlink()
+        }
+    }
+
+    private var petBody: some View {
+        ZStack {
+            HStack(spacing: 21) {
+                NotchPetTriangle()
+                    .fill(state.color.opacity(0.95))
+                    .frame(width: 14, height: 12)
+                    .rotationEffect(.degrees(-23))
+                NotchPetTriangle()
+                    .fill(state.color.opacity(0.95))
+                    .frame(width: 14, height: 12)
+                    .rotationEffect(.degrees(23))
+            }
+            .offset(y: -17)
+
+            RoundedRectangle(cornerRadius: 18, style: .continuous)
+                .fill(state.color.opacity(0.22))
+                .frame(width: 48, height: 38)
+                .blur(radius: 7)
+
+            RoundedRectangle(cornerRadius: 17, style: .continuous)
+                .fill(
+                    LinearGradient(
+                        colors: [state.color.opacity(0.98), state.color.opacity(0.52)],
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                    )
+                )
+                .overlay(RoundedRectangle(cornerRadius: 17, style: .continuous).stroke(Color.white.opacity(0.2), lineWidth: 1))
+                .shadow(color: state.color.opacity(0.34), radius: 7)
+
+            HStack(spacing: 12) {
+                eye
+                eye
+            }
+            .offset(y: -5)
+
+            SmileShape()
+                .stroke(Color.black.opacity(0.68), style: StrokeStyle(lineWidth: 2, lineCap: .round))
+                .frame(width: state == .hot ? 11 : 13, height: state == .hot ? 4 : 7)
+                .rotationEffect(.degrees(state == .hot ? 180 : 0))
+                .offset(y: 8)
+
+            if state == .hot {
+                Image(systemName: "drop.fill")
+                    .font(.system(size: 8, weight: .bold))
+                    .foregroundStyle(.cyan)
+                    .offset(x: 17, y: -15)
+            }
+        }
+    }
+
+    private var eye: some View {
+        Capsule()
+            .fill(.black.opacity(0.82))
+            .frame(width: 5, height: blink ? 1.5 : 8)
+            .animation(.easeInOut(duration: 0.12), value: blink)
+    }
+
+    private var subtitle: String {
+        switch state {
+        case .hot:
+            if let fanRPM { return "\(fanRPM) RPM · \(temperature.map { "\(Int($0.rounded()))°C" } ?? "warm")" }
+            return "system is warm"
+        case .music:
+            return "vibing with the track"
+        case .working:
+            return "repo has changes"
+        case .charging:
+            return "plugged in and happy"
+        case .idle:
+            return state.label
+        }
+    }
+
+    private func scheduleBlink() {
+        Task { @MainActor in
+            while true {
+                try? await Task.sleep(for: .seconds(Double.random(in: 2.0...4.5)))
+                blink = true
+                try? await Task.sleep(for: .milliseconds(140))
+                blink = false
+            }
+        }
+    }
+}
+
+private struct SmileShape: Shape {
+    func path(in rect: CGRect) -> Path {
+        var path = Path()
+        path.move(to: CGPoint(x: rect.minX, y: rect.midY))
+        path.addQuadCurve(
+            to: CGPoint(x: rect.maxX, y: rect.midY),
+            control: CGPoint(x: rect.midX, y: rect.maxY)
+        )
+        return path
+    }
+}
+
+private struct NotchPetTriangle: Shape {
+    func path(in rect: CGRect) -> Path {
+        var path = Path()
+        path.move(to: CGPoint(x: rect.midX, y: rect.minY))
+        path.addLine(to: CGPoint(x: rect.maxX, y: rect.maxY))
+        path.addLine(to: CGPoint(x: rect.minX, y: rect.maxY))
+        path.closeSubpath()
+        return path
     }
 }
 

@@ -147,6 +147,8 @@
 		75D83FD202970010A487BD1E /* DevStatusView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AFFC7564E6EDF55698B66BFB /* DevStatusView.swift */; };
 		8C77F94E0502AE971638E6EC /* DevStatusManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 38A014657A65C4BA22189CAD /* DevStatusManager.swift */; };
 		DAB205A9337CC48511FEBBCF /* ClipboardPreviewManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 85026371F84F8D59717E9AE0 /* ClipboardPreviewManager.swift */; };
+		9D6A10012F00000100000001 /* SystemPulseManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9D6A10002F00000100000001 /* SystemPulseManager.swift */; };
+		9D6A10032F00000100000001 /* SystemPulseView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9D6A10022F00000100000001 /* SystemPulseView.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -317,6 +319,8 @@
 		AFFC7564E6EDF55698B66BFB /* DevStatusView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DevStatusView.swift; sourceTree = "<group>"; };
 		38A014657A65C4BA22189CAD /* DevStatusManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DevStatusManager.swift; sourceTree = "<group>"; };
 		85026371F84F8D59717E9AE0 /* ClipboardPreviewManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClipboardPreviewManager.swift; sourceTree = "<group>"; };
+		9D6A10002F00000100000001 /* SystemPulseManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SystemPulseManager.swift; sourceTree = "<group>"; };
+		9D6A10022F00000100000001 /* SystemPulseView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SystemPulseView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
@@ -409,6 +413,14 @@
 				9A987A032C73CA66005CA465 /* ShelfView.swift */,
 			);
 			path = Views;
+			sourceTree = "<group>";
+		};
+		9D6A10042F00000100000001 /* SystemPulse */ = {
+			isa = PBXGroup;
+			children = (
+				9D6A10022F00000100000001 /* SystemPulseView.swift */,
+			);
+			path = SystemPulse;
 			sourceTree = "<group>";
 		};
 		C409BB038881D047FACDA098 /* Dev */ = {
@@ -504,6 +516,7 @@
 			isa = PBXGroup;
 			children = (
 				C409BB038881D047FACDA098 /* Dev */,
+				9D6A10042F00000100000001 /* SystemPulse */,
 				B141C23B2CA5F50900AC8CC8 /* Onboarding */,
 				B1C448992C97375A001F0858 /* Tips */,
 				14C08BB72C8DE49E000F8AA0 /* Calendar */,
@@ -529,6 +542,7 @@
 			isa = PBXGroup;
 			children = (
 				85026371F84F8D59717E9AE0 /* ClipboardPreviewManager.swift */,
+				9D6A10002F00000100000001 /* SystemPulseManager.swift */,
 				38A014657A65C4BA22189CAD /* DevStatusManager.swift */,
 				11D58EA12E760AE100FA8377 /* ImageService.swift */,
 				F38DE6472D8243E2008B5C6D /* BatteryActivityManager.swift */,
@@ -926,6 +940,8 @@
 			buildActionMask = 2147483647;
 			files = (
 				A8F43371B54035333CC4A4DA /* DevStatusCore.swift in Sources */,
+				9D6A10012F00000100000001 /* SystemPulseManager.swift in Sources */,
+				9D6A10032F00000100000001 /* SystemPulseView.swift in Sources */,
 				75D83FD202970010A487BD1E /* DevStatusView.swift in Sources */,
 				DAB205A9337CC48511FEBBCF /* ClipboardPreviewManager.swift in Sources */,
 				8C77F94E0502AE971638E6EC /* DevStatusManager.swift in Sources */,

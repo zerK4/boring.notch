@@ -704,6 +704,16 @@
         }
       }
     },
+    "%@ · %lld%%" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@ · %2$lld%%"
+          }
+        }
+      }
+    },
     "%d%%" : {
       "localizations" : {
         "ar" : {
@@ -3613,6 +3623,9 @@
           }
         }
       }
+    },
+    "Behavior" : {
+
     },
     "Boost your productivity with Clipboard Manager" : {
       "localizations" : {
@@ -8843,6 +8856,9 @@
         }
       }
     },
+    "Enable System Pulse" : {
+
+    },
     "Enable window shadow" : {
       "localizations" : {
         "ar" : {
@@ -9443,6 +9459,9 @@
           }
         }
       }
+    },
+    "Fan" : {
+
     },
     "Files dropped on the shelf will be shared via this service" : {
       "localizations" : {
@@ -12045,6 +12064,9 @@
         }
       }
     },
+    "Live snapshot" : {
+
+    },
     "Lottie JSON URL" : {
       "localizations" : {
         "ar" : {
@@ -13945,6 +13967,9 @@
         }
       }
     },
+    "Monitoring" : {
+
+    },
     "More" : {
       "localizations" : {
         "ar" : {
@@ -15446,6 +15471,12 @@
         }
       }
     },
+    "Notch pet" : {
+
+    },
+    "Notch Pet" : {
+
+    },
     "Notch sizing" : {
       "localizations" : {
         "ar" : {
@@ -16552,6 +16583,9 @@
     "Projects root" : {
 
     },
+    "PULSE" : {
+
+    },
     "Quick Share" : {
       "localizations" : {
         "ar" : {
@@ -16955,7 +16989,13 @@
     "Refresh Dev Status" : {
 
     },
+    "Refresh every %.1fs" : {
+
+    },
     "Refresh now" : {
+
+    },
+    "Refresh System Pulse" : {
 
     },
     "Release name" : {
@@ -18769,6 +18809,9 @@
         }
       }
     },
+    "Show alert in closed notch when system gets hot" : {
+
+    },
     "Show battery indicator" : {
       "localizations" : {
         "ar" : {
@@ -19173,6 +19216,9 @@
 
     },
     "Show Dev summary on Home screen" : {
+
+    },
+    "Show fan RPM in closed notch" : {
 
     },
     "Show HUD in open notch" : {
@@ -19674,6 +19720,12 @@
           }
         }
       }
+    },
+    "Show Notch Pet on Home" : {
+
+    },
+    "Show Notch Pet when notch is closed" : {
+
     },
     "Show on all displays" : {
       "localizations" : {
@@ -20278,6 +20330,9 @@
         }
       }
     },
+    "Show temperature in closed notch" : {
+
+    },
     "Slider color" : {
       "localizations" : {
         "ar" : {
@@ -20878,6 +20933,9 @@
         }
       }
     },
+    "States" : {
+
+    },
     "Stopped" : {
       "extractionState" : "stale",
       "localizations" : {
@@ -20978,6 +21036,9 @@
           }
         }
       }
+    },
+    "Style" : {
+
     },
     "Support Us" : {
       "extractionState" : "stale",
@@ -21279,6 +21340,24 @@
           }
         }
       }
+    },
+    "System Pulse" : {
+
+    },
+    "System Pulse samples lightly every few seconds. Fan RPM comes from SMC. Temperature uses an Apple Silicon CPU-die average when SMC temperature is unavailable, plus macOS thermal state as fallback." : {
+
+    },
+    "System Pulse: %@" : {
+
+    },
+    "Temperature" : {
+
+    },
+    "The Home pet appears under Calendar/Dev when there is room. The closed pet is a tiny overlay that can appear alongside music, Dev, System Pulse and battery states." : {
+
+    },
+    "Thermal" : {
+
     },
     "Time to Full Charge: %lld min" : {
       "localizations" : {
@@ -21679,6 +21758,9 @@
           }
         }
       }
+    },
+    "Top CPU" : {
+
     },
     "Two-finger swipe up on notch to close, two-finger swipe down on notch to open when **Open notch on hover** option is disabled" : {
       "localizations" : {
@@ -22880,6 +22962,9 @@
           }
         }
       }
+    },
+    "Visibility" : {
+
     },
     "Welcome" : {
       "localizations" : {

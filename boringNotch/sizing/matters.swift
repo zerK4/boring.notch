@@ -15,10 +15,15 @@ let batterySneakSize: CGSize = .init(width: 160, height: 1)
 let shadowPadding: CGFloat = 20
 let openNotchSize: CGSize = .init(width: 640, height: 190)
 let expandedOpenNotchSize: CGSize = .init(width: 640, height: 230)
-let windowSize: CGSize = .init(width: openNotchSize.width, height: expandedOpenNotchSize.height + shadowPadding)
+let petExpandedOpenNotchSize: CGSize = .init(width: 640, height: 280)
+let windowSize: CGSize = .init(width: openNotchSize.width, height: petExpandedOpenNotchSize.height + shadowPadding)
 
 func getOpenNotchSize() -> CGSize {
-    Defaults[.devHomeSummaryEnabled] ? expandedOpenNotchSize : openNotchSize
+    if Defaults[.showNotchPet] && (Defaults[.devHomeSummaryEnabled] || Defaults[.showCalendar]) {
+        return petExpandedOpenNotchSize
+    }
+
+    return Defaults[.devHomeSummaryEnabled] ? expandedOpenNotchSize : openNotchSize
 }
 let cornerRadiusInsets: (opened: (top: CGFloat, bottom: CGFloat), closed: (top: CGFloat, bottom: CGFloat)) = (opened: (top: 19, bottom: 24), closed: (top: 6, bottom: 14))
 

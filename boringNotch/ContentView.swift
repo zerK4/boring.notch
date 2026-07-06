@@ -6,6 +6,7 @@
 //  Modified by Richard Kunkli on 24/08/2024.
 //
 
+import AppKit
 import AVFoundation
 import Combine
 import Defaults
@@ -22,6 +23,7 @@ struct ContentView: View {
     @ObservedObject var musicManager = MusicManager.shared
     @ObservedObject var devStatusManager = DevStatusManager.shared
     @ObservedObject var clipboardPreviewManager = ClipboardPreviewManager.shared
+    @ObservedObject var systemPulseManager = SystemPulseManager.shared
     @ObservedObject var batteryModel = BatteryStatusViewModel.shared
     @ObservedObject var brightnessManager = BrightnessManager.shared
     @ObservedObject var volumeManager = VolumeManager.shared
@@ -39,6 +41,7 @@ struct ContentView: View {
 
     @Default(.showNotHumanFace) var showNotHumanFace
     @Default(.clipboardPreviewEnabled) var clipboardPreviewEnabled
+    @Default(.systemPulseEnabled) var systemPulseEnabled
     // Shared interactive spring
     // Shared interactive spring for movement/resizing to avoid conflicting animations
     private let animationSpring = Animation.interactiveSpring(response: 0.38, dampingFraction: 0.8, blendDuration: 0)
@@ -68,6 +71,8 @@ struct ContentView: View {
             && vm.notchState == .closed && Defaults[.showPowerStatusNotifications]
         {
             chinWidth = 640
+        } else if shouldShowSystemPulseClosedAlert {
+            chinWidth = max(chinWidth, min(330, vm.closedNotchSize.width + 150))
         } else if (!coordinator.expandingView.show || coordinator.expandingView.type == .music)
             && vm.notchState == .closed && (musicManager.isPlaying || !musicManager.isPlayerIdle)
             && coordinator.musicLiveActivityEnabled && !vm.hideOnClosed
@@ -237,6 +242,9 @@ struct ContentView: View {
         .onChange(of: clipboardPreviewEnabled) { _, enabled in
             enabled ? clipboardPreviewManager.start() : clipboardPreviewManager.stop()
         }
+        .onChange(of: systemPulseEnabled) { _, enabled in
+            enabled ? systemPulseManager.start() : systemPulseManager.stop()
+        }
         .onChange(of: vm.anyDropZoneTargeting) { _, isTargeted in
             anyDropDebounceTask?.cancel()
 
@@ -310,6 +318,9 @@ struct ContentView: View {
                       } else if coordinator.sneakPeek.show && Defaults[.inlineHUD] && (coordinator.sneakPeek.type != .music) && (coordinator.sneakPeek.type != .battery) && vm.notchState == .closed {
                           InlineHUD(type: $coordinator.sneakPeek.type, value: $coordinator.sneakPeek.value, icon: $coordinator.sneakPeek.icon, hoverAnimation: $isHovering, gestureProgress: $gestureProgress)
                               .transition(.opacity)
+                      } else if shouldShowSystemPulseClosedAlert {
+                          SystemPulseClosedLiveActivity()
+                              .frame(alignment: .center)
                       } else if (!coordinator.expandingView.show || coordinator.expandingView.type == .music) && vm.notchState == .closed && (musicManager.isPlaying || !musicManager.isPlayerIdle) && coordinator.musicLiveActivityEnabled && !vm.hideOnClosed {
                           MusicLiveActivity()
                               .frame(alignment: .center)
@@ -371,6 +382,15 @@ struct ContentView: View {
                   view
                       .fixedSize()
               }
+              .overlay(alignment: .topLeading) {
+                  if Defaults[.showClosedNotchPet] && vm.notchState == .closed && !vm.hideOnClosed {
+                      ClosedNotchPetView(state: closedNotchPetState)
+                          .frame(width: computedChinWidth, height: max(28, vm.effectiveClosedNotchHeight), alignment: .leading)
+                          .padding(.leading, 6)
+                          .transition(.opacity.combined(with: .scale(scale: 0.8)))
+                          .zIndex(3)
+                  }
+              }
               .zIndex(2)
             if vm.notchState == .open {
                 VStack {
@@ -381,6 +401,8 @@ struct ContentView: View {
                         ShelfView()
                     case .dev:
                         DevStatusView()
+                    case .systemPulse:
+                        SystemPulseView()
                     }
                 }
                 .transition(
@@ -394,6 +416,84 @@ struct ContentView: View {
             }
         }
         .onDrop(of: [.fileURL, .url, .utf8PlainText, .plainText, .data], delegate: GeneralDropTargetDelegate(isTargeted: $vm.generalDropTargeting))
+    }
+
+    private var shouldShowSystemPulseClosedAlert: Bool {
+        Defaults[.systemPulseEnabled]
+            && Defaults[.systemPulseClosedAlertEnabled]
+            && (Defaults[.systemPulseClosedShowFans] || Defaults[.systemPulseClosedShowTemperature])
+            && systemPulseManager.snapshot.shouldShowClosedAlert
+            && !coordinator.expandingView.show
+            && vm.notchState == .closed
+            && !vm.hideOnClosed
+    }
+
+    private var closedNotchPetState: ClosedNotchPetState {
+        if systemPulseManager.snapshot.severity >= .high {
+            return .hot
+        }
+        if musicManager.isPlaying || !musicManager.isPlayerIdle {
+            return .music
+        }
+        if devStatusManager.activeStatus?.hasChanges == true {
+            return .working
+        }
+        if batteryModel.isCharging || batteryModel.isPluggedIn {
+            return .charging
+        }
+        return .idle
+    }
+
+    private func closedSystemPulseMetrics(for snapshot: SystemPulseSnapshot) -> [String] {
+        var metrics: [String] = []
+
+        if Defaults[.systemPulseClosedShowFans], let fanRPM = snapshot.fanRPM {
+            metrics.append("\(fanRPM) RPM")
+        }
+
+        if Defaults[.systemPulseClosedShowTemperature], let temperature = snapshot.temperatureCelsius {
+            metrics.append("\(Int(temperature.rounded()))°C")
+        }
+
+        return metrics
+    }
+
+    @ViewBuilder
+    func SystemPulseClosedLiveActivity() -> some View {
+        let snapshot = systemPulseManager.snapshot
+        let metrics = closedSystemPulseMetrics(for: snapshot)
+        let leftMetric = metrics.first ?? snapshot.primaryMetric
+        let rightMetric = metrics.dropFirst().first ?? ""
+
+        HStack(spacing: 7) {
+            HStack(spacing: 5) {
+                Image(systemName: snapshot.severity.symbol)
+                    .font(.system(size: 9, weight: .bold))
+                    .symbolEffect(.pulse, options: .repeating, value: snapshot.severity)
+
+                Text(leftMetric)
+                    .font(.system(.caption, design: .monospaced))
+                    .fontWeight(.bold)
+                    .lineLimit(1)
+            }
+            .foregroundStyle(snapshot.severity.color)
+            .frame(width: 78, alignment: .trailing)
+
+            Rectangle()
+                .fill(.black)
+                .frame(width: vm.closedNotchSize.width - 20)
+
+            Text(rightMetric)
+                .font(.system(.caption2, design: .rounded))
+                .fontWeight(.semibold)
+                .foregroundStyle(.white.opacity(0.92))
+                .lineLimit(1)
+                .truncationMode(.tail)
+                .frame(width: 82, alignment: .leading)
+        }
+        .padding(.horizontal, 10)
+        .frame(width: computedChinWidth, height: vm.effectiveClosedNotchHeight, alignment: .center)
+        .help("System Pulse: \(metrics.joined(separator: " · "))")
     }
 
     @ViewBuilder
@@ -417,6 +517,13 @@ struct ContentView: View {
                         .foregroundStyle(.gray)
                         .lineLimit(1)
                         .truncationMode(.middle)
+
+                    if let hint = clipboardPreviewActionHint(for: preview) {
+                        Text(hint)
+                            .font(.system(size: 9, weight: .medium, design: .rounded))
+                            .foregroundStyle(Color.effectiveAccent.opacity(0.85))
+                            .lineLimit(1)
+                    }
                 }
             }
             .padding(.horizontal, 13)
@@ -428,6 +535,54 @@ struct ContentView: View {
                     .stroke(Color.white.opacity(0.12), lineWidth: 1)
             )
             .shadow(color: .black.opacity(0.45), radius: 12, x: 0, y: 8)
+            .contentShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+            .onTapGesture {
+                performClipboardPreviewAction(preview)
+            }
+            .onHover { hovering in
+                if hovering {
+                    NSCursor.pointingHand.push()
+                } else {
+                    NSCursor.pop()
+                }
+            }
+            .help(clipboardPreviewActionHint(for: preview) ?? preview.title)
+        }
+    }
+
+    private func clipboardPreviewActionHint(for preview: ClipboardPreview) -> String? {
+        switch preview.kind {
+        case .url:
+            return "Click to open"
+        case .filePath:
+            return "Click to reveal"
+        case .json, .branch:
+            return nil
+        }
+    }
+
+    private func performClipboardPreviewAction(_ preview: ClipboardPreview) {
+        switch preview.kind {
+        case .url:
+            if let url = URL(string: preview.copiedText) {
+                NSWorkspace.shared.open(url)
+                clipboardPreviewManager.dismissPreview()
+            }
+        case .filePath:
+            let expanded = (preview.copiedText as NSString).expandingTildeInPath
+            let url = URL(fileURLWithPath: expanded)
+            if FileManager.default.fileExists(atPath: expanded) {
+                NSWorkspace.shared.activateFileViewerSelecting([url])
+                clipboardPreviewManager.dismissPreview()
+            } else {
+                let parent = url.deletingLastPathComponent()
+                if FileManager.default.fileExists(atPath: parent.path) {
+                    NSWorkspace.shared.open(parent)
+                    clipboardPreviewManager.dismissPreview()
+                }
+            }
+        case .json, .branch:
+            break
         }
     }
 
@@ -711,6 +866,132 @@ struct ContentView: View {
                 haptics.toggle()
             }
         }
+    }
+}
+
+private enum ClosedNotchPetState {
+    case idle
+    case music
+    case hot
+    case working
+    case charging
+
+    var color: Color {
+        switch self {
+        case .idle: return .effectiveAccent
+        case .music: return .purple
+        case .hot: return .orange
+        case .working: return .yellow
+        case .charging: return .green
+        }
+    }
+
+    var symbol: String {
+        switch self {
+        case .idle: return "sparkles"
+        case .music: return "music.note"
+        case .hot: return "drop.fill"
+        case .working: return "hammer.fill"
+        case .charging: return "bolt.fill"
+        }
+    }
+}
+
+private struct ClosedNotchPetView: View {
+    let state: ClosedNotchPetState
+    @State private var bounce = false
+
+    var body: some View {
+        ZStack(alignment: .topTrailing) {
+            ZStack {
+                Circle()
+                    .fill(state.color.opacity(0.18))
+                    .frame(width: 28, height: 28)
+                    .blur(radius: 5)
+
+                ClosedPetCreature(color: state.color)
+                    .frame(width: 28, height: 24)
+                    .rotationEffect(.degrees(bounce ? 5 : -5))
+                    .offset(y: bounce ? -1 : 1)
+            }
+
+            Image(systemName: state.symbol)
+                .font(.system(size: 7, weight: .black))
+                .foregroundStyle(.black)
+                .frame(width: 12, height: 12)
+                .background(state.color, in: Circle())
+                .offset(x: 5, y: -5)
+        }
+        .frame(width: 38, height: 28)
+        .onAppear { bounce = true }
+        .animation(.easeInOut(duration: state == .music ? 0.26 : 1.15).repeatForever(autoreverses: true), value: bounce)
+        .allowsHitTesting(false)
+    }
+}
+
+private struct ClosedPetCreature: View {
+    let color: Color
+
+    var body: some View {
+        ZStack {
+            // ears
+            HStack(spacing: 12) {
+                Triangle()
+                    .fill(color.opacity(0.95))
+                    .frame(width: 9, height: 8)
+                    .rotationEffect(.degrees(-22))
+                Triangle()
+                    .fill(color.opacity(0.95))
+                    .frame(width: 9, height: 8)
+                    .rotationEffect(.degrees(22))
+            }
+            .offset(y: -10)
+
+            RoundedRectangle(cornerRadius: 12, style: .continuous)
+                .fill(
+                    LinearGradient(
+                        colors: [color.opacity(0.98), color.opacity(0.58)],
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                    )
+                )
+                .overlay(RoundedRectangle(cornerRadius: 12, style: .continuous).stroke(.white.opacity(0.18), lineWidth: 1))
+                .shadow(color: color.opacity(0.32), radius: 5)
+
+            HStack(spacing: 5) {
+                Circle().fill(.black.opacity(0.8)).frame(width: 3.6, height: 3.6)
+                Circle().fill(.black.opacity(0.8)).frame(width: 3.6, height: 3.6)
+            }
+            .offset(y: -3)
+
+            ClosedSmileShape()
+                .stroke(.black.opacity(0.66), style: StrokeStyle(lineWidth: 1.4, lineCap: .round))
+                .frame(width: 8, height: 4)
+                .offset(y: 5)
+        }
+    }
+}
+
+private struct ClosedSmileShape: Shape {
+    func path(in rect: CGRect) -> Path {
+        var path = Path()
+        path.move(to: CGPoint(x: rect.minX, y: rect.midY))
+        path.addQuadCurve(
+            to: CGPoint(x: rect.maxX, y: rect.midY),
+            control: CGPoint(x: rect.midX, y: rect.maxY)
+        )
+        return path
+    }
+}
+
+private struct Triangle: Shape {
+    func path(in rect: CGRect) -> Path {
+        var path = Path()
+        path.move(to: CGPoint(x: rect.midX, y: rect.minY))
+        path.addLine(to: CGPoint(x: rect.maxX, y: rect.maxY))
+        path.addLine(to: CGPoint(x: rect.minX, y: rect.maxY))
+        path.closeSubpath()
+        return path
     }
 }
 

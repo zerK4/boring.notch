@@ -24,6 +24,11 @@
 	<array>
 		<string>/Users/pavel/Desktop/projects/</string>
 	</array>
+	<key>com.apple.security.temporary-exception.iokit-user-client-class</key>
+	<array>
+		<string>AppleSMCClient</string>
+		<string>IOHIDEventServiceUserClient</string>
+	</array>
 	<key>com.apple.security.network.client</key>
 	<true/>
 	<key>com.apple.security.network.server</key>

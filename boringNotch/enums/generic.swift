@@ -28,6 +28,7 @@ public enum NotchViews {
     case home
     case shelf
     case dev
+    case systemPulse
 }
 
 enum SettingsEnum {

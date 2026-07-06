@@ -54,6 +54,12 @@ struct SettingsView: View {
                 NavigationLink(value: "Dev") {
                     Label("Dev", systemImage: "hammer")
                 }
+                NavigationLink(value: "System Pulse") {
+                    Label("System Pulse", systemImage: "waveform.path.ecg")
+                }
+                NavigationLink(value: "Notch Pet") {
+                    Label("Notch Pet", systemImage: "pawprint.fill")
+                }
                 NavigationLink(value: "Shortcuts") {
                     Label("Shortcuts", systemImage: "keyboard")
                 }
@@ -90,6 +96,10 @@ struct SettingsView: View {
                     Shelf()
                 case "Dev":
                     DevSettings()
+                case "System Pulse":
+                    SystemPulseSettings()
+                case "Notch Pet":
+                    NotchPetSettings()
                 case "Shortcuts":
                     Shortcuts()
                 case "Extensions":
@@ -1079,6 +1089,100 @@ struct DevSettings: View {
         .accentColor(.effectiveAccent)
         .navigationTitle("Dev")
         .onAppear { manager.refreshNow() }
+    }
+}
+
+struct NotchPetSettings: View {
+    var body: some View {
+        Form {
+            Section {
+                Defaults.Toggle(key: .showNotchPet) {
+                    Text("Show Notch Pet on Home")
+                }
+                Defaults.Toggle(key: .showClosedNotchPet) {
+                    Text("Show Notch Pet when notch is closed")
+                }
+            } header: {
+                Text("Visibility")
+            } footer: {
+                Text("The Home pet appears under Calendar/Dev when there is room. The closed pet is a tiny overlay that can appear alongside music, Dev, System Pulse and battery states.")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+
+            Section {
+                LabeledContent("States", value: "idle, music, hot, dev, charging")
+                LabeledContent("Style", value: "Happy mini creature")
+            } header: {
+                Text("Behavior")
+            }
+        }
+        .accentColor(.effectiveAccent)
+        .navigationTitle("Notch Pet")
+    }
+}
+
+struct SystemPulseSettings: View {
+    @Default(.systemPulseEnabled) var systemPulseEnabled
+    @Default(.systemPulseRefreshInterval) var systemPulseRefreshInterval
+    @ObservedObject private var manager = SystemPulseManager.shared
+
+    var body: some View {
+        Form {
+            Section {
+                Defaults.Toggle(key: .systemPulseEnabled) {
+                    Text("Enable System Pulse")
+                }
+                .onChange(of: systemPulseEnabled) { _, _ in
+                    manager.restart()
+                }
+
+                Defaults.Toggle(key: .systemPulseClosedAlertEnabled) {
+                    Text("Show alert in closed notch when system gets hot")
+                }
+
+                Defaults.Toggle(key: .systemPulseClosedShowFans) {
+                    Text("Show fan RPM in closed notch")
+                }
+
+                Defaults.Toggle(key: .systemPulseClosedShowTemperature) {
+                    Text("Show temperature in closed notch")
+                }
+
+                Slider(value: $systemPulseRefreshInterval, in: 1.5...8.0, step: 0.5) {
+                    Text("Refresh every \(systemPulseRefreshInterval, specifier: "%.1f")s")
+                }
+                .onChange(of: systemPulseRefreshInterval) { _, _ in
+                    manager.restart()
+                }
+            } header: {
+                Text("Monitoring")
+            } footer: {
+                Text("System Pulse samples lightly every few seconds. Fan RPM comes from SMC. Temperature uses an Apple Silicon CPU-die average when SMC temperature is unavailable, plus macOS thermal state as fallback.")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+
+            Section {
+                LabeledContent("Fan", value: manager.snapshot.fanRPM.map { "\($0) RPM" } ?? "Unavailable")
+                LabeledContent("Temperature", value: manager.snapshot.temperatureCelsius.map { "\(Int($0.rounded()))°C" } ?? "Unavailable")
+                LabeledContent("Thermal", value: manager.snapshot.thermalLabel)
+                if let topProcess = manager.snapshot.topProcess {
+                    LabeledContent("Top CPU", value: "\(topProcess.displayName) · \(Int(topProcess.cpuPercent.rounded()))%")
+                }
+                Text(manager.sensorStatus)
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                Button("Refresh now") {
+                    manager.refreshNow()
+                }
+            } header: {
+                Text("Live snapshot")
+            }
+        }
+        .accentColor(.effectiveAccent)
+        .navigationTitle("System Pulse")
+        .onAppear { manager.start() }
     }
 }
 
