@@ -16,6 +16,7 @@ struct DownloadWatcherSnapshot: Equatable {
         case none
         case inProgress
         case completed
+        case failed
     }
 
     let fileName: String
@@ -33,6 +34,7 @@ struct DownloadWatcherSnapshot: Equatable {
         case .none: return "No downloads"
         case .inProgress: return "Downloading"
         case .completed: return "Download complete"
+        case .failed: return "Download failed"
         }
     }
 
@@ -68,8 +70,10 @@ final class DownloadWatcherManager: ObservableObject {
     private var clearTask: Task<Void, Never>?
     private var settingsCancellables: Set<AnyCancellable> = []
     private var seenCompletedFiles: Set<String> = []
+    private var partialObservations: [String: PartialObservation] = [:]
 
     private let partialExtensions = ["download", "crdownload", "part", "opdownload", "tmp"]
+    private let failedPartialAge: TimeInterval = 12
 
     private init() {
         Defaults.publisher(.downloadWatcherEnabled)
@@ -122,7 +126,8 @@ final class DownloadWatcherManager: ObservableObject {
         if let active = partials.first {
             clearTask?.cancel()
             clearTask = nil
-            snapshot = active.snapshot(state: .inProgress)
+            let state: DownloadWatcherSnapshot.State = isLikelyFailedPartial(active) ? .failed : .inProgress
+            snapshot = active.snapshot(state: state)
             rememberLikelyCompletedFiles(near: files)
             return
         }
@@ -168,6 +173,26 @@ final class DownloadWatcherManager: ObservableObject {
                 seenCompletedFiles.insert(url.path)
             }
         }
+    }
+
+    private func isLikelyFailedPartial(_ candidate: DownloadCandidate) -> Bool {
+        let key = candidate.url.path
+        let now = Date()
+        let previous = partialObservations[key]
+        let unchangedSince: Date
+
+        if let previous, previous.bytes == candidate.bytes {
+            unchangedSince = previous.unchangedSince
+        } else {
+            unchangedSince = now
+        }
+
+        partialObservations[key] = PartialObservation(bytes: candidate.bytes, unchangedSince: unchangedSince, seenAt: now)
+        partialObservations = partialObservations.filter { now.timeIntervalSince($0.value.seenAt) < 120 }
+
+        let filesystemIdleAge = now.timeIntervalSince(candidate.modifiedAt)
+        let unchangedAge = now.timeIntervalSince(unchangedSince)
+        return filesystemIdleAge >= failedPartialAge * 2 || (filesystemIdleAge >= failedPartialAge && unchangedAge >= failedPartialAge)
     }
 
     private func recentlyCompletedFile(from files: [URL]) -> DownloadCandidate? {
@@ -221,6 +246,12 @@ final class DownloadWatcherManager: ObservableObject {
         let stripped = url.deletingPathExtension()
         return stripped.lastPathComponent.isEmpty ? url : stripped
     }
+}
+
+private struct PartialObservation {
+    let bytes: Int64
+    let unchangedSince: Date
+    let seenAt: Date
 }
 
 private struct DownloadCandidate {

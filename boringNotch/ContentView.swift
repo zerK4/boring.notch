@@ -568,17 +568,23 @@ struct ContentView: View {
         Button {
             downloadWatcherManager.revealCurrentDownload()
         } label: {
+            let isDone = snapshot.state == .completed
+            let isFailed = snapshot.state == .failed
+            let tint: Color = isFailed ? .red : (isDone ? .green : Color.effectiveAccent)
+            let icon = isFailed ? "exclamationmark.circle.fill" : (isDone ? "checkmark.circle.fill" : "arrow.down.circle.fill")
+            let compactStatus = isFailed ? "Failed" : (isDone ? "Done" : snapshot.formattedBytes)
+
             if hasPhysicalNotch {
                 HStack(spacing: 8) {
                     HStack(spacing: 5) {
-                        Image(systemName: snapshot.state == .completed ? "checkmark.circle.fill" : "arrow.down.circle.fill")
+                        Image(systemName: icon)
                             .font(.system(size: 9, weight: .bold))
-                        Text(snapshot.state == .completed ? "Done" : snapshot.formattedBytes)
+                        Text(compactStatus)
                             .font(.system(.caption, design: .monospaced))
                             .fontWeight(.bold)
                             .lineLimit(1)
                     }
-                    .foregroundStyle(snapshot.state == .completed ? .green : .effectiveAccent)
+                    .foregroundStyle(tint)
                     .frame(width: 92, alignment: .trailing)
 
                     Rectangle()
@@ -596,9 +602,9 @@ struct ContentView: View {
                 .padding(.horizontal, 10)
             } else {
                 HStack(spacing: 8) {
-                    Image(systemName: snapshot.state == .completed ? "checkmark.circle.fill" : "arrow.down.circle.fill")
+                    Image(systemName: icon)
                         .font(.system(size: 10, weight: .bold))
-                        .foregroundStyle(snapshot.state == .completed ? .green : .effectiveAccent)
+                        .foregroundStyle(tint)
                     Text(snapshot.title)
                         .font(.system(.caption, design: .rounded))
                         .fontWeight(.bold)
