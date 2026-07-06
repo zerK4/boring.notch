@@ -82,6 +82,12 @@ final class MeetingCompanionManager: ObservableObject {
             }
             .store(in: &settingsCancellables)
 
+        NotificationCenter.default.publisher(for: .EKEventStoreChanged)
+            .sink { [weak self] _ in
+                Task { @MainActor in self?.refreshNow() }
+            }
+            .store(in: &settingsCancellables)
+
         if Defaults[.meetingCompanionEnabled] {
             start()
         }
@@ -141,9 +147,7 @@ final class MeetingCompanionManager: ObservableObject {
             .filter { event in
                 event.startDate <= now.addingTimeInterval(TimeInterval(lead) * 60) || event.startDate <= now
             }
-            .filter { event in
-                Self.extractJoinURL(from: event) != nil || event.hasAttendees || (event.location?.isEmpty == false)
-            }
+            .filter { Self.isMeetingCandidate($0) }
             .sorted { lhs, rhs in
                 if lhs.startDate == rhs.startDate { return lhs.title < rhs.title }
                 return lhs.startDate < rhs.startDate
@@ -200,6 +204,22 @@ final class MeetingCompanionManager: ObservableObject {
         return URL(string: "ical://ekevent/\(id)?method=show&options=more")
     }
 
+    private static func isMeetingCandidate(_ event: EKEvent) -> Bool {
+        if extractJoinURL(from: event) != nil { return true }
+        if event.hasAttendees { return true }
+
+        let text = [event.title, event.location, event.notes]
+            .compactMap { $0 }
+            .joined(separator: "\n")
+            .lowercased()
+
+        return text.contains("facetime")
+            || text.contains("face time")
+            || text.contains("video call")
+            || text.contains("videocall")
+            || text.contains("call")
+    }
+
     private static func extractJoinURL(from event: EKEvent) -> URL? {
         if let url = event.url, isMeetingURL(url) { return url }
         let haystack = [event.location, event.notes, event.url?.absoluteString]
@@ -210,7 +230,7 @@ final class MeetingCompanionManager: ObservableObject {
 
     private static func firstMeetingURL(in text: String) -> URL? {
         guard !text.isEmpty else { return nil }
-        let pattern = #"https?://[^\s<>\"]+"#
+        let pattern = #"(?:https?|facetime|facetime-audio)://[^\s<>\"]+"#
         guard let regex = try? NSRegularExpression(pattern: pattern) else { return nil }
         let range = NSRange(text.startIndex..<text.endIndex, in: text)
         let matches = regex.matches(in: text, range: range)
@@ -225,6 +245,9 @@ final class MeetingCompanionManager: ObservableObject {
     }
 
     private static func isMeetingURL(_ url: URL) -> Bool {
+        let scheme = url.scheme?.lowercased()
+        if scheme == "facetime" || scheme == "facetime-audio" { return true }
+
         guard let host = url.host?.lowercased() else { return false }
         let path = url.path.lowercased()
         return host.contains("zoom.us")

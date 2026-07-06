@@ -161,7 +161,7 @@ extension Defaults.Keys {
     static let meetingCompanionEnabled = Key<Bool>("meetingCompanionEnabled", default: true)
     static let meetingCompanionClosedAlertEnabled = Key<Bool>("meetingCompanionClosedAlertEnabled", default: true)
     static let meetingCompanionShowOverMedia = Key<Bool>("meetingCompanionShowOverMedia", default: true)
-    static let meetingCompanionLeadTimeMinutes = Key<Int>("meetingCompanionLeadTimeMinutes", default: 10)
+    static let meetingCompanionLeadTimeMinutes = Key<Int>("meetingCompanionLeadTimeMinutes", default: 30)
     static let meetingCompanionShowJoinButton = Key<Bool>("meetingCompanionShowJoinButton", default: true)
     
     // MARK: HUD

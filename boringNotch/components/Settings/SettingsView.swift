@@ -1127,7 +1127,7 @@ struct CompanionsSettings: View {
                     Text("Show Join action in open notch")
                 }
 
-                Stepper("Meeting lead time: \(meetingCompanionLeadTimeMinutes)m", value: $meetingCompanionLeadTimeMinutes, in: 1...30, step: 1)
+                Stepper("Meeting lead time: \(meetingCompanionLeadTimeMinutes)m", value: $meetingCompanionLeadTimeMinutes, in: 1...60, step: 1)
                     .onChange(of: meetingCompanionLeadTimeMinutes) { _, _ in
                         meetingManager.refreshNow()
                     }
