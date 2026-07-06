@@ -7,6 +7,7 @@
 
 import AppKit
 import Combine
+import Darwin
 import Defaults
 import Foundation
 
@@ -106,16 +107,12 @@ final class DownloadWatcherManager: ObservableObject {
 
     func refreshNow() {
         guard Defaults[.downloadWatcherEnabled] else { return }
-        let downloads = FileManager.default.urls(for: .downloadsDirectory, in: .userDomainMask).first
-            ?? URL(fileURLWithPath: ("~/Downloads" as NSString).expandingTildeInPath, isDirectory: true)
-        guard let files = try? FileManager.default.contentsOfDirectory(
-            at: downloads,
-            includingPropertiesForKeys: [.contentModificationDateKey, .fileSizeKey, .isRegularFileKey],
-            options: [.skipsHiddenFiles]
-        ) else {
+        guard let payload = readableDownloadsContents() else {
             lastError = "Cannot read Downloads folder"
             return
         }
+        lastError = nil
+        let files = payload.files
 
         let partials = files
             .filter { partialExtensions.contains($0.pathExtension.lowercased()) }
@@ -185,6 +182,37 @@ final class DownloadWatcherManager: ObservableObject {
             }
             .sorted { $0.modifiedAt > $1.modifiedAt }
             .first
+    }
+
+    private func readableDownloadsContents() -> (url: URL, files: [URL])? {
+        for url in downloadsCandidateURLs() {
+            if let files = try? FileManager.default.contentsOfDirectory(
+                at: url,
+                includingPropertiesForKeys: [.contentModificationDateKey, .fileSizeKey, .isRegularFileKey],
+                options: [.skipsHiddenFiles]
+            ) {
+                return (url, files)
+            }
+        }
+        return nil
+    }
+
+    private func downloadsCandidateURLs() -> [URL] {
+        var candidates: [URL] = []
+
+        if let sandboxAware = FileManager.default.urls(for: .downloadsDirectory, in: .userDomainMask).first {
+            candidates.append(sandboxAware)
+        }
+
+        if let passwd = getpwuid(getuid()), let homePointer = passwd.pointee.pw_dir {
+            let realHome = String(cString: homePointer)
+            candidates.append(URL(fileURLWithPath: realHome).appendingPathComponent("Downloads", isDirectory: true))
+        }
+
+        candidates.append(URL(fileURLWithPath: "/Users/\(NSUserName())/Downloads", isDirectory: true))
+
+        var seen = Set<String>()
+        return candidates.filter { seen.insert($0.standardizedFileURL.path).inserted }
     }
 
     private func resolvedDownloadURL(from url: URL) -> URL {

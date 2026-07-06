@@ -21,10 +21,12 @@
 	<key>com.apple.security.temporary-exception.files.home-relative-path.read-write</key>
 	<array>
 		<string>/Desktop/projects/</string>
+		<string>/Downloads/</string>
 	</array>
 	<key>com.apple.security.temporary-exception.files.absolute-path.read-write</key>
 	<array>
 		<string>/Users/pavel/Desktop/projects/</string>
+		<string>/Users/pavel/Downloads/</string>
 	</array>
 	<key>com.apple.security.temporary-exception.iokit-user-client-class</key>
 	<array>
