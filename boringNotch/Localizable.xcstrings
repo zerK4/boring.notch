@@ -5936,6 +5936,15 @@
         }
       }
     },
+    "Companions" : {
+
+    },
+    "Completed toast duration" : {
+
+    },
+    "Completed toast: %.0fs" : {
+
+    },
     "Continue" : {
       "localizations" : {
         "ar" : {
@@ -6235,6 +6244,12 @@
           }
         }
       }
+    },
+    "Current download" : {
+
+    },
+    "Current meeting" : {
+
     },
     "Current status" : {
 
@@ -7551,6 +7566,9 @@
         }
       }
     },
+    "Download Watcher" : {
+
+    },
     "Downloads" : {
       "extractionState" : "stale",
       "localizations" : {
@@ -8456,6 +8474,9 @@
     "Enable Dev Mode" : {
 
     },
+    "Enable Download Watcher" : {
+
+    },
     "Enable gestures" : {
       "localizations" : {
         "ar" : {
@@ -8755,6 +8776,9 @@
           }
         }
       }
+    },
+    "Enable Meeting Companion" : {
+
     },
     "Enable shelf" : {
       "localizations" : {
@@ -9461,6 +9485,9 @@
       }
     },
     "Fan" : {
+
+    },
+    "File" : {
 
     },
     "Files dropped on the shelf will be shared via this service" : {
@@ -11964,6 +11991,15 @@
         }
       }
     },
+    "Join link" : {
+
+    },
+    "Join meeting" : {
+
+    },
+    "Join/Open" : {
+
+    },
     "Layout Preview" : {
       "localizations" : {
         "ar" : {
@@ -12063,6 +12099,12 @@
           }
         }
       }
+    },
+    "Let downloads appear over music/now playing" : {
+
+    },
+    "Let meetings appear over music/now playing" : {
+
     },
     "Live snapshot" : {
 
@@ -13666,6 +13708,15 @@
           }
         }
       }
+    },
+    "Meeting" : {
+
+    },
+    "Meeting Companion" : {
+
+    },
+    "Meeting lead time: %lldm" : {
+
     },
     "Mic %@" : {
       "localizations" : {
@@ -15677,6 +15728,12 @@
         }
       }
     },
+    "Open in Calendar" : {
+
+    },
+    "Open meeting in Calendar" : {
+
+    },
     "Open Notch" : {
       "localizations" : {
         "ar" : {
@@ -16986,7 +17043,13 @@
         }
       }
     },
+    "Refresh" : {
+
+    },
     "Refresh Dev Status" : {
+
+    },
+    "Refresh downloads" : {
 
     },
     "Refresh every %.1fs" : {
@@ -17801,6 +17864,9 @@
         }
       }
     },
+    "Request Calendar Access" : {
+
+    },
     "Reset to Defaults" : {
       "localizations" : {
         "ar" : {
@@ -18101,6 +18167,12 @@
           }
         }
       }
+    },
+    "Reveal download in Finder" : {
+
+    },
+    "Reveal in Finder" : {
+
     },
     "Running" : {
       "extractionState" : "stale",
@@ -19112,6 +19184,9 @@
         }
       }
     },
+    "Show completed download toast" : {
+
+    },
     "Show cool face animation while inactive" : {
       "localizations" : {
         "ar" : {
@@ -19218,6 +19293,9 @@
     "Show Dev summary on Home screen" : {
 
     },
+    "Show downloads while notch is closed" : {
+
+    },
     "Show fan RPM in closed notch" : {
 
     },
@@ -19321,6 +19399,9 @@
         }
       }
     },
+    "Show Join action in open notch" : {
+
+    },
     "Show lyrics below artist name" : {
       "localizations" : {
         "ar" : {
@@ -19420,6 +19501,9 @@
           }
         }
       }
+    },
+    "Show meetings while notch is closed" : {
+
     },
     "Show menu bar icon" : {
       "localizations" : {
@@ -20333,6 +20417,12 @@
     "Show temperature in closed notch" : {
 
     },
+    "Shows the next active/upcoming meeting and extracts Zoom, Google Meet, Teams, Webex and similar links from Calendar URL, location or notes. On real-notch MacBooks, the closed activity uses left/right lanes so text avoids the physical cutout." : {
+
+    },
+    "Size" : {
+
+    },
     "Slider color" : {
       "localizations" : {
         "ar" : {
@@ -20733,6 +20823,9 @@
         }
       }
     },
+    "Source" : {
+
+    },
     "Speed" : {
       "localizations" : {
         "ar" : {
@@ -20933,7 +21026,13 @@
         }
       }
     },
+    "State" : {
+
+    },
     "States" : {
+
+    },
+    "Status" : {
 
     },
     "Stopped" : {
@@ -22964,6 +23063,9 @@
       }
     },
     "Visibility" : {
+
+    },
+    "Watches the local Downloads folder for Safari .download, Chrome .crdownload, Firefox .part and similar partial files. Click the closed/open activity to reveal the file in Finder." : {
 
     },
     "Welcome" : {
