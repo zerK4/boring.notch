@@ -57,6 +57,9 @@ struct SettingsView: View {
                 NavigationLink(value: "System Pulse") {
                     Label("System Pulse", systemImage: "waveform.path.ecg")
                 }
+                NavigationLink(value: "Companions") {
+                    Label("Companions", systemImage: "person.crop.square.badge.video")
+                }
                 NavigationLink(value: "Notch Pet") {
                     Label("Notch Pet", systemImage: "pawprint.fill")
                 }
@@ -98,6 +101,8 @@ struct SettingsView: View {
                     DevSettings()
                 case "System Pulse":
                     SystemPulseSettings()
+                case "Companions":
+                    CompanionsSettings()
                 case "Notch Pet":
                     NotchPetSettings()
                 case "Shortcuts":
@@ -1089,6 +1094,157 @@ struct DevSettings: View {
         .accentColor(.effectiveAccent)
         .navigationTitle("Dev")
         .onAppear { manager.refreshNow() }
+    }
+}
+
+struct CompanionsSettings: View {
+    @Default(.meetingCompanionEnabled) var meetingCompanionEnabled
+    @Default(.meetingCompanionLeadTimeMinutes) var meetingCompanionLeadTimeMinutes
+    @Default(.downloadWatcherEnabled) var downloadWatcherEnabled
+    @Default(.downloadWatcherCompletedToastDuration) var downloadWatcherCompletedToastDuration
+    @ObservedObject private var meetingManager = MeetingCompanionManager.shared
+    @ObservedObject private var downloadManager = DownloadWatcherManager.shared
+
+    var body: some View {
+        Form {
+            Section {
+                Defaults.Toggle(key: .meetingCompanionEnabled) {
+                    Text("Enable Meeting Companion")
+                }
+                .onChange(of: meetingCompanionEnabled) { _, enabled in
+                    enabled ? meetingManager.start() : meetingManager.stop()
+                }
+
+                Defaults.Toggle(key: .meetingCompanionClosedAlertEnabled) {
+                    Text("Show meetings while notch is closed")
+                }
+
+                Defaults.Toggle(key: .meetingCompanionShowOverMedia) {
+                    Text("Let meetings appear over music/now playing")
+                }
+
+                Defaults.Toggle(key: .meetingCompanionShowJoinButton) {
+                    Text("Show Join action in open notch")
+                }
+
+                Stepper("Meeting lead time: \(meetingCompanionLeadTimeMinutes)m", value: $meetingCompanionLeadTimeMinutes, in: 1...30, step: 1)
+                    .onChange(of: meetingCompanionLeadTimeMinutes) { _, _ in
+                        meetingManager.refreshNow()
+                    }
+
+                HStack {
+                    Button("Request Calendar Access") {
+                        meetingManager.requestAccess()
+                    }
+                    Button("Refresh") {
+                        meetingManager.refreshNow()
+                    }
+                    Spacer()
+                    Text(meetingManager.authorizationStatus.description)
+                        .foregroundStyle(.secondary)
+                        .font(.caption)
+                }
+            } header: {
+                Text("Meeting Companion")
+            } footer: {
+                Text("Shows the next active/upcoming meeting and extracts Zoom, Google Meet, Teams, Webex and similar links from Calendar URL, location or notes. On real-notch MacBooks, the closed activity uses left/right lanes so text avoids the physical cutout.")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+
+            Section {
+                if meetingManager.snapshot.isActive {
+                    LabeledContent("Meeting", value: meetingManager.snapshot.compactTitle)
+                    LabeledContent("Status", value: meetingManager.snapshot.statusText)
+                    LabeledContent("Join link", value: meetingManager.snapshot.joinURL?.host ?? "Not found")
+                    HStack {
+                        Button("Join/Open") { meetingManager.joinMeeting() }
+                            .disabled(meetingManager.snapshot.joinURL == nil && meetingManager.snapshot.calendarURL == nil)
+                        Button("Open in Calendar") { meetingManager.openCalendarEvent() }
+                            .disabled(meetingManager.snapshot.calendarURL == nil)
+                    }
+                } else {
+                    Text(meetingManager.lastError ?? "No upcoming meeting inside the lead window.")
+                        .foregroundStyle(.secondary)
+                }
+            } header: {
+                Text("Current meeting")
+            }
+
+            Section {
+                Defaults.Toggle(key: .downloadWatcherEnabled) {
+                    Text("Enable Download Watcher")
+                }
+                .onChange(of: downloadWatcherEnabled) { _, enabled in
+                    enabled ? downloadManager.start() : downloadManager.stop()
+                }
+
+                Defaults.Toggle(key: .downloadWatcherClosedAlertEnabled) {
+                    Text("Show downloads while notch is closed")
+                }
+
+                Defaults.Toggle(key: .downloadWatcherShowOverMedia) {
+                    Text("Let downloads appear over music/now playing")
+                }
+
+                Defaults.Toggle(key: .downloadWatcherShowCompletedToast) {
+                    Text("Show completed download toast")
+                }
+
+                Slider(value: $downloadWatcherCompletedToastDuration, in: 2...10, step: 1) {
+                    Text("Completed toast duration")
+                }
+                Text("Completed toast: \(downloadWatcherCompletedToastDuration, specifier: "%.0f")s")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+
+                Button("Refresh downloads") {
+                    downloadManager.refreshNow()
+                }
+            } header: {
+                Text("Download Watcher")
+            } footer: {
+                Text("Watches the local Downloads folder for Safari .download, Chrome .crdownload, Firefox .part and similar partial files. Click the closed/open activity to reveal the file in Finder.")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+
+            Section {
+                if downloadManager.snapshot.isVisible {
+                    LabeledContent("State", value: downloadManager.snapshot.title)
+                    LabeledContent("File", value: downloadManager.snapshot.fileName)
+                    LabeledContent("Source", value: downloadManager.snapshot.browserName)
+                    LabeledContent("Size", value: downloadManager.snapshot.formattedBytes)
+                    Button("Reveal in Finder") { downloadManager.revealCurrentDownload() }
+                        .disabled(downloadManager.snapshot.fileURL == nil)
+                } else {
+                    Text(downloadManager.lastError ?? "No active downloads detected.")
+                        .foregroundStyle(.secondary)
+                }
+            } header: {
+                Text("Current download")
+            }
+        }
+        .accentColor(.effectiveAccent)
+        .navigationTitle("Companions")
+        .onAppear {
+            meetingManager.refreshNow()
+            downloadManager.refreshNow()
+        }
+    }
+}
+
+private extension EKAuthorizationStatus {
+    var description: String {
+        switch self {
+        case .notDetermined: return "Not requested"
+        case .restricted: return "Restricted"
+        case .denied: return "Denied"
+        case .authorized: return "Authorized"
+        case .fullAccess: return "Full Access"
+        case .writeOnly: return "Write Only"
+        @unknown default: return "Unknown"
+        }
     }
 }
 

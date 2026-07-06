@@ -151,6 +151,18 @@ extension Defaults.Keys {
     static let enableSafariDownloads = Key<Bool>("enableSafariDownloads", default: true)
     static let selectedDownloadIndicatorStyle = Key<DownloadIndicatorStyle>("selectedDownloadIndicatorStyle", default: DownloadIndicatorStyle.progress)
     static let selectedDownloadIconStyle = Key<DownloadIconStyle>("selectedDownloadIconStyle", default: DownloadIconStyle.onlyAppIcon)
+    static let downloadWatcherEnabled = Key<Bool>("downloadWatcherEnabled", default: true)
+    static let downloadWatcherClosedAlertEnabled = Key<Bool>("downloadWatcherClosedAlertEnabled", default: true)
+    static let downloadWatcherShowOverMedia = Key<Bool>("downloadWatcherShowOverMedia", default: true)
+    static let downloadWatcherShowCompletedToast = Key<Bool>("downloadWatcherShowCompletedToast", default: true)
+    static let downloadWatcherCompletedToastDuration = Key<Double>("downloadWatcherCompletedToastDuration", default: 4.0)
+
+    // MARK: Meeting Companion
+    static let meetingCompanionEnabled = Key<Bool>("meetingCompanionEnabled", default: true)
+    static let meetingCompanionClosedAlertEnabled = Key<Bool>("meetingCompanionClosedAlertEnabled", default: true)
+    static let meetingCompanionShowOverMedia = Key<Bool>("meetingCompanionShowOverMedia", default: true)
+    static let meetingCompanionLeadTimeMinutes = Key<Int>("meetingCompanionLeadTimeMinutes", default: 10)
+    static let meetingCompanionShowJoinButton = Key<Bool>("meetingCompanionShowJoinButton", default: true)
     
     // MARK: HUD
     static let hudReplacement = Key<Bool>("hudReplacement", default: false)

@@ -24,6 +24,8 @@ struct ContentView: View {
     @ObservedObject var devStatusManager = DevStatusManager.shared
     @ObservedObject var clipboardPreviewManager = ClipboardPreviewManager.shared
     @ObservedObject var systemPulseManager = SystemPulseManager.shared
+    @ObservedObject var meetingCompanionManager = MeetingCompanionManager.shared
+    @ObservedObject var downloadWatcherManager = DownloadWatcherManager.shared
     @ObservedObject var batteryModel = BatteryStatusViewModel.shared
     @ObservedObject var brightnessManager = BrightnessManager.shared
     @ObservedObject var volumeManager = VolumeManager.shared
@@ -42,6 +44,8 @@ struct ContentView: View {
     @Default(.showNotHumanFace) var showNotHumanFace
     @Default(.clipboardPreviewEnabled) var clipboardPreviewEnabled
     @Default(.systemPulseEnabled) var systemPulseEnabled
+    @Default(.meetingCompanionEnabled) var meetingCompanionEnabled
+    @Default(.downloadWatcherEnabled) var downloadWatcherEnabled
     // Shared interactive spring
     // Shared interactive spring for movement/resizing to avoid conflicting animations
     private let animationSpring = Animation.interactiveSpring(response: 0.38, dampingFraction: 0.8, blendDuration: 0)
@@ -71,6 +75,10 @@ struct ContentView: View {
             && vm.notchState == .closed && Defaults[.showPowerStatusNotifications]
         {
             chinWidth = 640
+        } else if shouldShowMeetingClosedAlert {
+            chinWidth = hasPhysicalNotch ? max(chinWidth, min(430, vm.closedNotchSize.width + 220)) : max(chinWidth, 320)
+        } else if shouldShowDownloadClosedAlert {
+            chinWidth = hasPhysicalNotch ? max(chinWidth, min(400, vm.closedNotchSize.width + 190)) : max(chinWidth, 300)
         } else if shouldShowSystemPulseClosedAlert {
             chinWidth = max(chinWidth, min(330, vm.closedNotchSize.width + 150))
         } else if (!coordinator.expandingView.show || coordinator.expandingView.type == .music)
@@ -245,6 +253,12 @@ struct ContentView: View {
         .onChange(of: systemPulseEnabled) { _, enabled in
             enabled ? systemPulseManager.start() : systemPulseManager.stop()
         }
+        .onChange(of: meetingCompanionEnabled) { _, enabled in
+            enabled ? meetingCompanionManager.start() : meetingCompanionManager.stop()
+        }
+        .onChange(of: downloadWatcherEnabled) { _, enabled in
+            enabled ? downloadWatcherManager.start() : downloadWatcherManager.stop()
+        }
         .onChange(of: vm.anyDropZoneTargeting) { _, isTargeted in
             anyDropDebounceTask?.cancel()
 
@@ -318,6 +332,12 @@ struct ContentView: View {
                       } else if coordinator.sneakPeek.show && Defaults[.inlineHUD] && (coordinator.sneakPeek.type != .music) && (coordinator.sneakPeek.type != .battery) && vm.notchState == .closed {
                           InlineHUD(type: $coordinator.sneakPeek.type, value: $coordinator.sneakPeek.value, icon: $coordinator.sneakPeek.icon, hoverAnimation: $isHovering, gestureProgress: $gestureProgress)
                               .transition(.opacity)
+                      } else if shouldShowMeetingClosedAlert {
+                          MeetingClosedLiveActivity()
+                              .frame(alignment: .center)
+                      } else if shouldShowDownloadClosedAlert {
+                          DownloadClosedLiveActivity()
+                              .frame(alignment: .center)
                       } else if shouldShowSystemPulseClosedAlert {
                           SystemPulseClosedLiveActivity()
                               .frame(alignment: .center)
@@ -418,6 +438,35 @@ struct ContentView: View {
         .onDrop(of: [.fileURL, .url, .utf8PlainText, .plainText, .data], delegate: GeneralDropTargetDelegate(isTargeted: $vm.generalDropTargeting))
     }
 
+    private var hasPhysicalNotch: Bool {
+        let currentScreen = vm.screenUUID.flatMap { NSScreen.screen(withUUID: $0) } ?? NSScreen.main
+        return (currentScreen?.safeAreaInsets.top ?? 0) > 0
+    }
+
+    private var mediaIsActive: Bool {
+        musicManager.isPlaying || !musicManager.isPlayerIdle
+    }
+
+    private var shouldShowMeetingClosedAlert: Bool {
+        Defaults[.meetingCompanionEnabled]
+            && Defaults[.meetingCompanionClosedAlertEnabled]
+            && meetingCompanionManager.snapshot.isActive
+            && !coordinator.expandingView.show
+            && vm.notchState == .closed
+            && !vm.hideOnClosed
+            && (Defaults[.meetingCompanionShowOverMedia] || !mediaIsActive)
+    }
+
+    private var shouldShowDownloadClosedAlert: Bool {
+        Defaults[.downloadWatcherEnabled]
+            && Defaults[.downloadWatcherClosedAlertEnabled]
+            && downloadWatcherManager.snapshot.isVisible
+            && !coordinator.expandingView.show
+            && vm.notchState == .closed
+            && !vm.hideOnClosed
+            && (Defaults[.downloadWatcherShowOverMedia] || !mediaIsActive)
+    }
+
     private var shouldShowSystemPulseClosedAlert: Bool {
         Defaults[.systemPulseEnabled]
             && Defaults[.systemPulseClosedAlertEnabled]
@@ -456,6 +505,116 @@ struct ContentView: View {
         }
 
         return metrics
+    }
+
+    @ViewBuilder
+    func MeetingClosedLiveActivity() -> some View {
+        let snapshot = meetingCompanionManager.snapshot
+        Button {
+            meetingCompanionManager.joinMeeting()
+        } label: {
+            if hasPhysicalNotch {
+                HStack(spacing: 8) {
+                    HStack(spacing: 5) {
+                        Image(systemName: snapshot.joinURL == nil ? "calendar" : "video.fill")
+                            .font(.system(size: 9, weight: .bold))
+                        Text(snapshot.statusText)
+                            .font(.system(.caption, design: .rounded))
+                            .fontWeight(.bold)
+                            .lineLimit(1)
+                    }
+                    .foregroundStyle(Color.effectiveAccent)
+                    .frame(width: 96, alignment: .trailing)
+
+                    Rectangle()
+                        .fill(.black)
+                        .frame(width: max(80, vm.closedNotchSize.width - 18))
+
+                    Text(snapshot.compactTitle)
+                        .font(.system(.caption2, design: .rounded))
+                        .fontWeight(.semibold)
+                        .foregroundStyle(.white.opacity(0.92))
+                        .lineLimit(1)
+                        .truncationMode(.tail)
+                        .frame(width: 116, alignment: .leading)
+                }
+                .padding(.horizontal, 10)
+            } else {
+                HStack(spacing: 8) {
+                    Image(systemName: snapshot.joinURL == nil ? "calendar" : "video.fill")
+                        .font(.system(size: 10, weight: .bold))
+                        .foregroundStyle(Color.effectiveAccent)
+                    Text(snapshot.statusText)
+                        .font(.system(.caption, design: .rounded))
+                        .fontWeight(.bold)
+                        .foregroundStyle(Color.effectiveAccent)
+                    Text(snapshot.compactTitle)
+                        .font(.system(.caption2, design: .rounded))
+                        .foregroundStyle(.white.opacity(0.9))
+                        .lineLimit(1)
+                        .truncationMode(.tail)
+                }
+                .padding(.horizontal, 14)
+            }
+        }
+        .buttonStyle(.plain)
+        .frame(width: computedChinWidth, height: vm.effectiveClosedNotchHeight, alignment: .center)
+        .help(snapshot.joinURL == nil ? "Open meeting in Calendar" : "Join meeting")
+    }
+
+    @ViewBuilder
+    func DownloadClosedLiveActivity() -> some View {
+        let snapshot = downloadWatcherManager.snapshot
+        Button {
+            downloadWatcherManager.revealCurrentDownload()
+        } label: {
+            if hasPhysicalNotch {
+                HStack(spacing: 8) {
+                    HStack(spacing: 5) {
+                        Image(systemName: snapshot.state == .completed ? "checkmark.circle.fill" : "arrow.down.circle.fill")
+                            .font(.system(size: 9, weight: .bold))
+                        Text(snapshot.state == .completed ? "Done" : snapshot.formattedBytes)
+                            .font(.system(.caption, design: .monospaced))
+                            .fontWeight(.bold)
+                            .lineLimit(1)
+                    }
+                    .foregroundStyle(snapshot.state == .completed ? .green : .effectiveAccent)
+                    .frame(width: 92, alignment: .trailing)
+
+                    Rectangle()
+                        .fill(.black)
+                        .frame(width: max(80, vm.closedNotchSize.width - 18))
+
+                    Text(snapshot.fileName)
+                        .font(.system(.caption2, design: .rounded))
+                        .fontWeight(.semibold)
+                        .foregroundStyle(.white.opacity(0.92))
+                        .lineLimit(1)
+                        .truncationMode(.middle)
+                        .frame(width: 106, alignment: .leading)
+                }
+                .padding(.horizontal, 10)
+            } else {
+                HStack(spacing: 8) {
+                    Image(systemName: snapshot.state == .completed ? "checkmark.circle.fill" : "arrow.down.circle.fill")
+                        .font(.system(size: 10, weight: .bold))
+                        .foregroundStyle(snapshot.state == .completed ? .green : .effectiveAccent)
+                    Text(snapshot.title)
+                        .font(.system(.caption, design: .rounded))
+                        .fontWeight(.bold)
+                        .foregroundStyle(.white)
+                    Text(snapshot.fileName)
+                        .font(.system(.caption2, design: .rounded))
+                        .foregroundStyle(.gray)
+                        .lineLimit(1)
+                        .truncationMode(.middle)
+                }
+                .padding(.horizontal, 14)
+            }
+        }
+        .buttonStyle(.plain)
+        .frame(width: computedChinWidth, height: vm.effectiveClosedNotchHeight, alignment: .center)
+        .help("Reveal download in Finder")
     }
 
     @ViewBuilder

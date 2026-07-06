@@ -149,6 +149,8 @@
 		DAB205A9337CC48511FEBBCF /* ClipboardPreviewManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 85026371F84F8D59717E9AE0 /* ClipboardPreviewManager.swift */; };
 		9D6A10012F00000100000001 /* SystemPulseManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9D6A10002F00000100000001 /* SystemPulseManager.swift */; };
 		9D6A10032F00000100000001 /* SystemPulseView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9D6A10022F00000100000001 /* SystemPulseView.swift */; };
+		9D6A20012F00000100000001 /* MeetingCompanionManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9D6A20002F00000100000001 /* MeetingCompanionManager.swift */; };
+		9D6A20032F00000100000001 /* DownloadWatcherManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9D6A20022F00000100000001 /* DownloadWatcherManager.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -321,6 +323,8 @@
 		85026371F84F8D59717E9AE0 /* ClipboardPreviewManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClipboardPreviewManager.swift; sourceTree = "<group>"; };
 		9D6A10002F00000100000001 /* SystemPulseManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SystemPulseManager.swift; sourceTree = "<group>"; };
 		9D6A10022F00000100000001 /* SystemPulseView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SystemPulseView.swift; sourceTree = "<group>"; };
+		9D6A20002F00000100000001 /* MeetingCompanionManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MeetingCompanionManager.swift; sourceTree = "<group>"; };
+		9D6A20022F00000100000001 /* DownloadWatcherManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DownloadWatcherManager.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
@@ -543,6 +547,8 @@
 			children = (
 				85026371F84F8D59717E9AE0 /* ClipboardPreviewManager.swift */,
 				9D6A10002F00000100000001 /* SystemPulseManager.swift */,
+				9D6A20022F00000100000001 /* DownloadWatcherManager.swift */,
+				9D6A20002F00000100000001 /* MeetingCompanionManager.swift */,
 				38A014657A65C4BA22189CAD /* DevStatusManager.swift */,
 				11D58EA12E760AE100FA8377 /* ImageService.swift */,
 				F38DE6472D8243E2008B5C6D /* BatteryActivityManager.swift */,
@@ -942,6 +948,8 @@
 				A8F43371B54035333CC4A4DA /* DevStatusCore.swift in Sources */,
 				9D6A10012F00000100000001 /* SystemPulseManager.swift in Sources */,
 				9D6A10032F00000100000001 /* SystemPulseView.swift in Sources */,
+				9D6A20032F00000100000001 /* DownloadWatcherManager.swift in Sources */,
+				9D6A20012F00000100000001 /* MeetingCompanionManager.swift in Sources */,
 				75D83FD202970010A487BD1E /* DevStatusView.swift in Sources */,
 				DAB205A9337CC48511FEBBCF /* ClipboardPreviewManager.swift in Sources */,
 				8C77F94E0502AE971638E6EC /* DevStatusManager.swift in Sources */,
