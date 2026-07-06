@@ -78,7 +78,7 @@ struct ContentView: View {
         } else if shouldShowMeetingClosedAlert {
             chinWidth = hasPhysicalNotch ? max(chinWidth, min(430, vm.closedNotchSize.width + 220)) : max(chinWidth, 320)
         } else if shouldShowDownloadClosedAlert {
-            chinWidth = hasPhysicalNotch ? max(chinWidth, min(400, vm.closedNotchSize.width + 190)) : max(chinWidth, 300)
+            chinWidth = hasPhysicalNotch ? max(chinWidth, min(400, vm.closedNotchSize.width + 190)) : max(chinWidth, estimatedDownloadClosedWidth)
         } else if shouldShowSystemPulseClosedAlert {
             chinWidth = max(chinWidth, min(330, vm.closedNotchSize.width + 150))
         } else if (!coordinator.expandingView.show || coordinator.expandingView.type == .music)
@@ -445,6 +445,25 @@ struct ContentView: View {
 
     private var mediaIsActive: Bool {
         musicManager.isPlaying || !musicManager.isPlayerIdle
+    }
+
+    private var estimatedDownloadClosedWidth: CGFloat {
+        let snapshot = downloadWatcherManager.snapshot
+        guard snapshot.isVisible else { return vm.closedNotchSize.width }
+
+        let isDone = snapshot.state == .completed
+        let isFailed = snapshot.state == .failed
+        let compactStatus = isFailed ? "Failed" : (isDone ? "Done" : snapshot.formattedBytes)
+
+        // Non-notch displays have no physical cutout, so size the closed pill to content
+        // instead of reserving a wide fixed notch-safe lane. This keeps short downloads
+        // compact while still growing for long filenames or large size strings.
+        let iconAndSpacing: CGFloat = 30
+        let horizontalPadding: CGFloat = 28
+        let statusWidth = CGFloat(compactStatus.count) * 8.5
+        let filenameWidth = min(CGFloat(snapshot.fileName.count) * 7.2, 360)
+        let width = iconAndSpacing + horizontalPadding + statusWidth + filenameWidth
+        return min(max(width, 220), windowSize.width - 24)
     }
 
     private var shouldShowMeetingClosedAlert: Bool {
