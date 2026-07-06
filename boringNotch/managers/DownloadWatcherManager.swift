@@ -123,16 +123,29 @@ final class DownloadWatcherManager: ObservableObject {
             .compactMap { DownloadCandidate(url: $0) }
             .sorted { $0.modifiedAt > $1.modifiedAt }
 
-        if let active = partials.first {
+        let activePartial = partials.first
+        let completed = recentlyCompletedFile(
+            from: files,
+            maxAge: activePartial == nil ? max(2, Defaults[.downloadWatcherCompletedToastDuration] + 2) : 10 * 60,
+            ignoringSeen: activePartial != nil
+        )
+
+        if let active = activePartial {
+            if let completed, completed.modifiedAt > active.modifiedAt {
+                snapshot = completed.snapshot(state: .completed)
+                seenCompletedFiles.insert(completed.url.path)
+                scheduleClearCompletedToast()
+                return
+            }
+
             clearTask?.cancel()
             clearTask = nil
             let state: DownloadWatcherSnapshot.State = isLikelyFailedPartial(active) ? .failed : .inProgress
             snapshot = active.snapshot(state: state)
-            rememberLikelyCompletedFiles(near: files)
             return
         }
 
-        if Defaults[.downloadWatcherShowCompletedToast], let completed = recentlyCompletedFile(from: files) {
+        if Defaults[.downloadWatcherShowCompletedToast], let completed {
             snapshot = completed.snapshot(state: .completed)
             seenCompletedFiles.insert(completed.url.path)
             scheduleClearCompletedToast()
@@ -164,17 +177,6 @@ final class DownloadWatcherManager: ObservableObject {
         }
     }
 
-    private func rememberLikelyCompletedFiles(near files: [URL]) {
-        let now = Date()
-        for url in files {
-            guard !partialExtensions.contains(url.pathExtension.lowercased()) else { continue }
-            guard let modified = try? url.resourceValues(forKeys: [.contentModificationDateKey]).contentModificationDate else { continue }
-            if now.timeIntervalSince(modified) < 2 {
-                seenCompletedFiles.insert(url.path)
-            }
-        }
-    }
-
     private func isLikelyFailedPartial(_ candidate: DownloadCandidate) -> Bool {
         let key = candidate.url.path
         let now = Date()
@@ -195,14 +197,14 @@ final class DownloadWatcherManager: ObservableObject {
         return filesystemIdleAge >= failedPartialAge * 2 || (filesystemIdleAge >= failedPartialAge && unchangedAge >= failedPartialAge)
     }
 
-    private func recentlyCompletedFile(from files: [URL]) -> DownloadCandidate? {
+    private func recentlyCompletedFile(from files: [URL], maxAge: TimeInterval, ignoringSeen: Bool) -> DownloadCandidate? {
         let now = Date()
         return files
             .filter { !partialExtensions.contains($0.pathExtension.lowercased()) }
             .compactMap { DownloadCandidate(url: $0) }
             .filter { candidate in
-                !seenCompletedFiles.contains(candidate.url.path)
-                    && now.timeIntervalSince(candidate.modifiedAt) <= max(2, Defaults[.downloadWatcherCompletedToastDuration] + 2)
+                (ignoringSeen || !seenCompletedFiles.contains(candidate.url.path))
+                    && now.timeIntervalSince(candidate.modifiedAt) <= maxAge
                     && !candidate.url.lastPathComponent.hasPrefix(".")
             }
             .sorted { $0.modifiedAt > $1.modifiedAt }
